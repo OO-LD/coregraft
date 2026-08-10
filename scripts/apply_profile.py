@@ -99,8 +99,12 @@ def strip_markers(answers: dict[str, str]) -> None:
             if truthy(answers.get(key, "")):
                 text = re.sub(rf"[ \t]*# (?:>>>|<<<) {key}\n", "", text)
             else:
-                text = re.sub(rf"[ \t]*# >>> {key}\n.*?[ \t]*# <<< {key}\n", "", text, flags=re.S)
-        path.write_text(text, encoding="utf-8")
+                # Consume one blank line before the block too, otherwise
+                # removing a trailing block leaves the file ending in a blank
+                # line and end-of-file-fixer rewrites it on the first commit.
+                text = re.sub(rf"\n?[ \t]*# >>> {key}\n.*?[ \t]*# <<< {key}\n", "\n", text, flags=re.S)
+        # Whatever the surgery left behind, the file ends with exactly one newline.
+        path.write_text(text.rstrip("\n") + "\n", encoding="utf-8")
 
 
 def prune_optouts(answers: dict[str, str]) -> None:

@@ -144,3 +144,28 @@ def test_optin_layers_are_kept_when_selected(tmp_path: Path) -> None:
     # Marker comments must not survive into the instance.
     assert "# >>> citation" not in pyproject
     assert "# <<< benchmarks" not in (target / "Makefile").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_generated_files_are_pre_commit_clean(tmp_path: Path, profile: str) -> None:
+    # Marker stripping must not leave trailing blank lines or a missing final
+    # newline: end-of-file-fixer would rewrite the file on the first commit,
+    # which failed CI once for the benchmarks block in main.yml.
+    target = tmp_path / profile
+    _generate(target, profile)
+    for path in target.rglob("*"):
+        # Skip caches and other tool-owned dot directories; only the files the
+        # template actually ships are subject to pre-commit.
+        if any(part.startswith(".") and part not in (".github", ".devcontainer") for part in path.parts):
+            continue
+        if not path.is_file() or path.suffix in (".png", ".ico"):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        if not text:
+            continue
+        assert text.endswith("\n"), f"{path.name}: no final newline"
+        assert not text.endswith("\n\n"), f"{path.name}: trailing blank line"
+        assert ">>>" not in text and "<<<" not in text, f"{path.name}: marker survived"
