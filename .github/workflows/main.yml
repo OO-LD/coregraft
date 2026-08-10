@@ -111,6 +111,7 @@ jobs:
         with:
           args: >-
             --config "$RUNNER_TEMP/instance/lychee.toml" --no-progress
+            --exclude-path node_modules --exclude-path site
             "$RUNNER_TEMP/instance/**/*.md"
           fail: true
           failIfEmpty: false

@@ -27,6 +27,7 @@ jobs:
         with:
           args: >-
             --config lychee.toml --no-progress
+            --exclude-path node_modules --exclude-path site
             "**/*.md"
           fail: true
           # A repo state with no links in its Markdown is legitimate (the
