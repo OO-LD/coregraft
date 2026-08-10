@@ -103,3 +103,17 @@ jobs:
           make check
           make test
           make docs-test
+
+      # The instance must also pass the link check it ships with, otherwise
+      # every generated repository starts red on its first push.
+      - name: Check the instance's Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: >-
+            --config "$RUNNER_TEMP/instance/lychee.toml" --no-progress
+            --exclude-path node_modules --exclude-path site
+            "$RUNNER_TEMP/instance/**/*.md"
+          fail: true
+          failIfEmpty: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

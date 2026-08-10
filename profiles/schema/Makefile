@@ -27,7 +27,7 @@ stage-schemas: ## Copy schemas/ into docs/ so every version serves them
 .PHONY: check
 check: validate spec stage-schemas ## Run all quality checks
 	@echo "🚀 Linting: Running pre-commit"
-	@uv run pre-commit run -a
+	@uv run pre-commit run --files $$(git ls-files --cached --others --exclude-standard)
 	@echo "🚀 Checking the rendered spec is up to date"
 	@git diff --exit-code docs/spec/index.html
 
@@ -41,6 +41,10 @@ docs-test: stage-schemas ## Test if documentation can be built without warnings 
 .PHONY: docs
 docs: stage-schemas ## Build and serve the documentation
 	@uv run zensical serve
+
+.PHONY: ci
+ci: check test docs-test ## Run everything CI runs, before pushing
+	@echo "✅ Ready to push"
 
 .PHONY: help
 help:

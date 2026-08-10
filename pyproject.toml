@@ -10,8 +10,8 @@ license = "Apache-2.0"
 license-files = ["LICENSE"]
 keywords = ["template", "github-template", "copier", "uv", "semantic-release"]
 requires-python = ">=3.10,<4.0"
-# Version is managed by python-semantic-release from conventional commits
-# (wired up in a later phase). Do not edit by hand.
+# Managed by python-semantic-release from conventional commits, together with
+# TEMPLATE_VERSION. Do not edit by hand.
 version = "0.8.0"
 
 [project.urls]
