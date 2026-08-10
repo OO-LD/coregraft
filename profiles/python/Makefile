@@ -9,7 +9,7 @@ check: ## Run code quality tools
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
 	@uv lock --locked
 	@echo "🚀 Linting code: Running pre-commit"
-	@uv run pre-commit run -a
+	@uv run pre-commit run --files $$(git ls-files --cached --others --exclude-standard)
 	@echo "🚀 Static type checking: Running ty"
 	@uv run ty check
 	@echo "🚀 Checking for obsolete dependencies: Running deptry"
@@ -50,6 +50,10 @@ docs-test: ## Test if documentation can be built without warnings or errors
 .PHONY: docs
 docs: ## Build and serve the documentation
 	@uv run zensical serve
+
+.PHONY: ci
+ci: check test docs-test ## Run everything CI runs, before pushing
+	@echo "✅ Ready to push"
 
 .PHONY: help
 help:

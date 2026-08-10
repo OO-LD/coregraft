@@ -18,7 +18,7 @@ check: ## Run code quality tools
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
 	@uv lock --locked
 	@echo "🚀 Linting code: Running pre-commit"
-	@uv run pre-commit run -a
+	@uv run pre-commit run --files $$(git ls-files --cached --others --exclude-standard)
 	@echo "🚀 Static type checking: Running ty"
 	@uv run ty check
 
@@ -38,6 +38,10 @@ docs: ## Build and serve the documentation
 .PHONY: instances
 instances: ## List repositories grown from this template and their version
 	@GH_TOKEN=$${GH_TOKEN:-$$(gh auth token)} uv run scripts/track_instances.py --owner $${OWNER:-OO-LD}
+
+.PHONY: ci
+ci: check test docs-test ## Run everything CI runs, before pushing
+	@echo "✅ Ready to push"
 
 .PHONY: help
 help:
