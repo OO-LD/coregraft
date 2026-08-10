@@ -7,6 +7,22 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.6.0 (2026-08-10)
+
+### Bug Fixes
+
+- **ci**: Ignore staged schema links in the link checker
+  ([`8d2b658`](https://github.com/OO-LD/coregraft/commit/8d2b658a43ac9c103e41ab1789c2e489f5a1e440))
+
+- **profile**: Add ruff configuration to the schema profile
+  ([`61b8030`](https://github.com/OO-LD/coregraft/commit/61b803082f5f958876d6a0f3ebd871223eb9430f))
+
+### Features
+
+- **profile**: Add schema profile overlay
+  ([`a7dbcd7`](https://github.com/OO-LD/coregraft/commit/a7dbcd7e81e7fb5a0519a52cce484a50f37f3ae6))
+
+
 ## v0.5.0 (2026-08-10)
 
 ### Features
