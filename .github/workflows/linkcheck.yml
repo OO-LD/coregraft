@@ -29,6 +29,9 @@ jobs:
             --config lychee.toml --no-progress
             "**/*.md"
           fail: true
+          # A repo state with no links in its Markdown is legitimate (the
+          # skeleton README has none); only broken links should fail the job.
+          failIfEmpty: false
         env:
           # Authenticated GitHub requests avoid api.github.com / github.com rate limits.
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
