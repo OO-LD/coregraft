@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.8.0 (2026-08-10)
+
+### Features
+
+- **ci**: Add template backport workflow and instance registry
+  ([`3348e58`](https://github.com/OO-LD/coregraft/commit/3348e58a6148c6daeda0b8293805c54e30f55f2f))
+
+
 ## v0.7.0 (2026-08-10)
 
 ### Bug Fixes
