@@ -1,0 +1,21 @@
+[project]
+site_name = "coregraft-example"
+repo_url = "https://github.com/coregraft-owner/coregraft-example"
+site_url = "https://coregraft-owner.github.io/coregraft-example/"
+site_description = "A coregraft example project"
+edit_uri = "edit/main/docs/"
+repo_name = "coregraft-owner/coregraft-example"
+
+nav = [
+    { "Home" = "index.md" },
+    { "Specification" = "spec/index.html" },
+]
+
+[project.theme]
+language = "en"
+features = ["content.code.copy", "navigation.footer", "search.highlight"]
+
+[project.markdown_extensions.pymdownx.superfences]
+
+[project.markdown_extensions.toc]
+permalink = true

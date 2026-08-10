@@ -6,7 +6,7 @@ max_retries = 3
 retry_wait_time = 2
 
 # A real browser-ish user agent; some hosts reject the default checker agent.
-user_agent = "Mozilla/5.0 (compatible; coregraft-linkcheck/1.0; +https://github.com/OO-LD/coregraft)"
+user_agent = "Mozilla/5.0 (compatible; linkcheck/1.0)"
 
 # The ignore list (excluded URL patterns) lives in .lycheeignore, so edge cases
 # are maintained in one place without weakening real links.

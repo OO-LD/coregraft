@@ -35,7 +35,7 @@ OPTOUT_FILES: dict[str, list[str]] = {
     "codecov": ["codecov.yaml", ".github/workflows/validate-codecov-config.yml"],
 }
 
-TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".cfg", ".ini", ".txt", ""}
+TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".cfg", ".ini", ".txt", ".json", ".mjs", ".html", ""}
 
 
 def read_answers() -> dict[str, str]:
