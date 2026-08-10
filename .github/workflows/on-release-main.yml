@@ -1,0 +1,86 @@
+# Automated release for the template repository itself: python-semantic-release
+# reads the conventional commits on main, bumps pyproject.toml and
+# TEMPLATE_VERSION, updates CHANGELOG.md, commits, tags, and a GitHub release
+# is created with generated notes. The tags are what `copier update` resolves
+# template versions against, so releasing is what makes backports possible.
+#
+# coregraft is not a distributable package: there is no build and no PyPI
+# publish here. Those steps live in the python profile's release workflow.
+#
+# Requires two repository secrets for the GitHub App that pushes the release
+# commit past the main ruleset: RELEASE_APP_ID and RELEASE_APP_PRIVATE_KEY.
+name: release-main
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # push the release commit and tag, create the GitHub release
+    outputs:
+      released: ${{ steps.version.outputs.released }}
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.RELEASE_APP_ID }}
+          private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
+
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # full history + tags so PSR can analyze commits
+          ref: main
+          token: ${{ steps.app-token.outputs.token }}   # app identity bypasses the main ruleset
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Semantic release version
+        id: version
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+        run: |
+          before=$(git rev-parse HEAD)
+          # PSR bumps files, updates CHANGELOG.md, commits and tags, but does not
+          # create the GitHub release; we create it below with GitHub's generated
+          # "What's Changed" notes (no changelog duplication).
+          uv run semantic-release version --no-vcs-release
+          after=$(git rev-parse HEAD)
+          if [ "$before" != "$after" ]; then
+            tag=$(git tag --points-at HEAD | grep -E '^v[0-9]' | head -1)
+            echo "released=true" >> "$GITHUB_OUTPUT"
+            echo "version=${tag#v}" >> "$GITHUB_OUTPUT"
+            echo "Released $tag"
+          else
+            echo "released=false" >> "$GITHUB_OUTPUT"
+            echo "No release for this push."
+          fi
+
+      - name: Create GitHub release with generated notes
+        if: steps.version.outputs.released == 'true'
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          VERSION: ${{ steps.version.outputs.version }}
+        run: |
+          gh release create "v$VERSION" --verify-tag --title "v$VERSION" --generate-notes
+          # Append a link to the full grouped changelog (kept in CHANGELOG.md),
+          # so the release has "What's Changed" plus a pointer, no duplication.
+          notes=$(gh release view "v$VERSION" --json body -q .body)
+          link="Full grouped changelog: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/v${VERSION}/CHANGELOG.md)"
+          gh release edit "v$VERSION" --notes "${notes}"$'\n\n---\n'"${link}"
