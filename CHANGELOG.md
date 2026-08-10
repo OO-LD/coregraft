@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.4.0 (2026-08-10)
+
+### Features
+
+- **template**: Add make init bootstrap
+  ([`0b56c33`](https://github.com/OO-LD/coregraft/commit/0b56c33d3f25e844035c0dfff3a4d90027cda15b))
+
+
 ## v0.3.0 (2026-08-10)
 
 ### Documentation
