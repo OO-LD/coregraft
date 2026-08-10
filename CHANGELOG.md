@@ -7,6 +7,19 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.3.0 (2026-08-10)
+
+### Documentation
+
+- Add contributing guide, issue forms and pull request template
+  ([`c6f3102`](https://github.com/OO-LD/coregraft/commit/c6f31023d3d4f091214fcbebc84d6752b6b5b4c2))
+
+### Features
+
+- **template**: Add copier questionnaire and answers file
+  ([`f999c3f`](https://github.com/OO-LD/coregraft/commit/f999c3f9edd5635310d2229defe565e8fb89de71))
+
+
 ## v0.2.0 (2026-08-10)
 
 ### Features
