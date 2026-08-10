@@ -1,0 +1,120 @@
+# The questionnaire: the single source of truth for everything an instance
+# answers at creation. `make init` (the documented path) asks these same
+# questions; `copier copy` and `copier update` consume them natively. Only
+# .copier-answers.yml.jinja is rendered - every other file in this repository
+# is literal and the repository runs as-is.
+
+_min_copier_version: "9.0.0"
+
+_message_after_copy: |
+    Your repository is ready. Next steps:
+
+      cd {{ project_name }}
+      make install
+      make check
+
+# Files that belong to the template repository itself and must not reach
+# instances. Profile-conditional pruning joins this list when the profiles
+# land. Setting _exclude replaces copier's defaults, so they are repeated.
+_exclude:
+    - "copier.yml"
+    - "~*"
+    - "*.py[co]"
+    - "__pycache__"
+    - ".git"
+    - ".DS_Store"
+    # template-own content, not for instances
+    - "CHANGELOG.md"
+    - "TEMPLATE_VERSION"
+    - "CONTRIBUTING.md"
+    - "README.md"
+    - "docs"
+    - "macros.py"
+    - "tests"
+    - ".github/workflows/on-release-main.yml"
+    - ".github/workflows/docs.yml"
+
+profile:
+    type: str
+    help: Which profile should this repository use?
+    choices:
+        python: python
+        schema: schema
+    default: python
+
+project_name:
+    type: str
+    help: Repository name (as on GitHub)
+    placeholder: my-project
+    validator: >-
+        {% if not (project_name | regex_search('^[a-z][a-z0-9._-]+$')) %}
+        Use lowercase letters, digits, dots, dashes or underscores, starting with a letter.
+        {% endif %}
+
+package_name:
+    type: str
+    help: Python import name
+    default: "{{ project_name | lower | replace('-', '_') | replace('.', '_') }}"
+    when: "{{ profile == 'python' }}"
+
+owner:
+    type: str
+    help: GitHub owner (user or organization)
+    placeholder: my-org
+
+description:
+    type: str
+    help: One-line project description
+
+license:
+    type: str
+    help: License (fetched from the GitHub License API by `make init`; `none` leaves the repository unlicensed)
+    choices:
+        - agpl-3.0
+        - apache-2.0
+        - bsd-2-clause
+        - bsd-3-clause
+        - bsl-1.0
+        - cc0-1.0
+        - epl-2.0
+        - gpl-2.0
+        - gpl-3.0
+        - lgpl-2.1
+        - mit
+        - mpl-2.0
+        - unlicense
+        - none
+    default: none
+
+pypi_publish:
+    type: bool
+    help: Publish releases to PyPI (trusted publishing)?
+    default: false
+    when: "{{ profile == 'python' }}"
+
+codecov:
+    type: bool
+    help: Upload coverage to Codecov?
+    default: false
+    when: "{{ profile == 'python' }}"
+
+dockerfile:
+    type: bool
+    help: Include a Dockerfile?
+    default: false
+
+devcontainer:
+    type: bool
+    help: Include a dev container configuration?
+    default: false
+
+benchmarks:
+    type: bool
+    help: Include pytest-benchmark with CI comparison?
+    default: false
+    when: "{{ profile == 'python' }}"
+
+citation:
+    type: bool
+    help: Include CITATION.cff (Zenodo-ready, version-synced on release)?
+    default: false

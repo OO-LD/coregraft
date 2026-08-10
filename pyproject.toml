@@ -31,6 +31,7 @@ dev = [
     "zensical>=0.0.46",
     # docs versioning: zensical-compatible mike fork (same pin as OO-LD/oold-schema)
     "mike @ git+https://github.com/squidfunk/mike.git@2.2.0+zensical-0.1.0",
+    "copier>=9.10.0",
 ]
 
 [tool.semantic_release]
