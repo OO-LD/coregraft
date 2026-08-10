@@ -49,3 +49,15 @@ jobs:
 
       - name: Run the template integrity tests
         run: make test
+
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Check if documentation can be built
+        run: make docs-test

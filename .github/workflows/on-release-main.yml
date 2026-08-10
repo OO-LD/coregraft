@@ -31,7 +31,7 @@ jobs:
     steps:
       - name: Generate app token
         id: app-token
-        uses: actions/create-github-app-token@v1
+        uses: actions/create-github-app-token@v2
         with:
           app-id: ${{ secrets.RELEASE_APP_ID }}
           private-key: ${{ secrets.RELEASE_APP_PRIVATE_KEY }}
@@ -46,10 +46,17 @@ jobs:
       - name: Set up the environment
         uses: ./.github/actions/setup-python-env
 
+      # Release commits are authored by whichever release App this repository
+      # uses (derived from the token, not hardcoded), so history shows who cut
+      # the release and forks with their own App keep their own identity.
       - name: Configure git identity
+        env:
+          GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          APP_SLUG: ${{ steps.app-token.outputs.app-slug }}
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          bot_id=$(gh api "users/${APP_SLUG}%5Bbot%5D" --jq .id)
+          git config user.name "${APP_SLUG}[bot]"
+          git config user.email "${bot_id}+${APP_SLUG}[bot]@users.noreply.github.com"
 
       - name: Semantic release version
         id: version
@@ -84,3 +91,38 @@ jobs:
           notes=$(gh release view "v$VERSION" --json body -q .body)
           link="Full grouped changelog: [CHANGELOG.md](https://github.com/${GITHUB_REPOSITORY}/blob/v${VERSION}/CHANGELOG.md)"
           gh release edit "v$VERSION" --notes "${notes}"$'\n\n---\n'"${link}"
+
+  # Publish the versioned docs with mike (zensical fork). Serialized with the
+  # dev deploy from docs.yml on one concurrency group so pushes to gh-pages
+  # never race. The full semver is served at /<version>/ with the `latest`
+  # alias as a real directory (--alias-type=copy), and / redirects to latest.
+  deploy-docs:
+    needs: release
+    if: needs.release.outputs.released == 'true'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write  # mike pushes to gh-pages
+    concurrency:
+      group: pages-deploy
+      cancel-in-progress: false
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          ref: main   # include the release commit just pushed by PSR
+          fetch-depth: 0
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy versioned documentation
+        env:
+          VERSION: ${{ needs.release.outputs.version }}
+        run: |
+          uv run mike deploy --push --alias-type=copy --update-aliases "$VERSION" latest
+          uv run mike set-default --push latest

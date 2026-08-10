@@ -21,6 +21,14 @@ test: ## Run the template integrity tests
 	@echo "🚀 Testing the template: Running pytest"
 	@uv run python -m pytest
 
+.PHONY: docs-test
+docs-test: ## Test if documentation can be built without warnings or errors
+	@uv run zensical build -s
+
+.PHONY: docs
+docs: ## Build and serve the documentation
+	@uv run zensical serve
+
 .PHONY: help
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
