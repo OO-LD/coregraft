@@ -1,0 +1,82 @@
+# Backports from the template: `copier update` replays changes made in
+# coregraft since this repository was generated, and opens a pull request.
+#
+# Local edits are preserved: copier regenerates the old template version from
+# .copier-answers.yml, diffs it against this repository to capture what you
+# changed, applies the new template version, then re-applies your diff.
+# Anything it cannot merge arrives as conflict markers for a human to resolve,
+# so the pull request is a proposal, never an automatic overwrite.
+#
+# Runs weekly and on demand. Needs no secret: the built-in token opens the PR.
+name: template-update
+
+on:
+  schedule:
+    - cron: "0 5 * * 1"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: template-update
+  cancel-in-progress: false
+
+jobs:
+  update:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # copier compares template versions against history
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Check for a newer template version
+        id: check
+        run: |
+          current=$(grep '^_commit:' .copier-answers.yml | cut -d' ' -f2)
+          src=$(grep '^_src_path:' .copier-answers.yml | cut -d' ' -f2)
+          latest=$(git ls-remote --tags --refs "$src" \
+            | awk -F/ '{print $NF}' | grep -E '^v[0-9]+\.[0-9]+\.[0-9]+$' | sort -V | tail -1)
+          echo "current=$current" >> "$GITHUB_OUTPUT"
+          echo "latest=$latest" >> "$GITHUB_OUTPUT"
+          if [ -n "$latest" ] && [ "$current" != "$latest" ]; then
+            echo "outdated=true" >> "$GITHUB_OUTPUT"
+            echo "Template moved: $current -> $latest"
+          else
+            echo "outdated=false" >> "$GITHUB_OUTPUT"
+            echo "Already on $current."
+          fi
+
+      # --conflict inline leaves git-style markers in place of a failed merge,
+      # so the pull request shows exactly what needs a decision. --trust is
+      # required because the template personalises through a task.
+      - name: Apply the template update
+        if: steps.check.outputs.outdated == 'true'
+        run: |
+          uvx copier update --skip-answered --trust --conflict inline --defaults
+
+      - name: Open a pull request
+        if: steps.check.outputs.outdated == 'true'
+        uses: peter-evans/create-pull-request@v7
+        with:
+          branch: template-update
+          title: "chore: update from template ${{ steps.check.outputs.latest }}"
+          commit-message: "chore: update from template ${{ steps.check.outputs.latest }}"
+          body: |
+            Backport from the template, `${{ steps.check.outputs.current }}` to `${{ steps.check.outputs.latest }}`.
+
+            Local changes were preserved: the template diff was re-applied on top of this repository, not over it. Any place the two could not be merged automatically is marked with conflict markers (`<<<<<<<`), so search for those before merging.
+
+            Review as you would any pull request; nothing here is applied automatically.
+          labels: template-update
+          delete-branch: true

@@ -35,6 +35,10 @@ docs-test: ## Test if documentation can be built without warnings or errors
 docs: ## Build and serve the documentation
 	@uv run zensical serve
 
+.PHONY: instances
+instances: ## List repositories grown from this template and their version
+	@GH_TOKEN=$${GH_TOKEN:-$$(gh auth token)} uv run scripts/track_instances.py --owner $${OWNER:-OO-LD}
+
 .PHONY: help
 help:
 	@grep -E '^[a-zA-Z_-]+:.*?## .*$$' $(MAKEFILE_LIST) \
