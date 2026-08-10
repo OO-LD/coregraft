@@ -33,3 +33,20 @@ insertion_flag = "<!-- version list -->"
 
 [tool.semantic_release.changelog.default_templates]
 changelog_file = "CHANGELOG.md"
+
+# Applies to the tooling scripts (scripts/*.py); keep in step with the other
+# profiles so a script moved between repositories formats identically.
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+fix = true
+
+[tool.ruff.lint]
+select = [
+    "YTT", "S", "B", "A", "C4", "T10", "SIM", "I", "C90", "E", "W", "F",
+    "PGH", "UP", "RUF", "TRY",
+]
+ignore = ["E501", "E731", "TRY003"]
+
+[tool.ruff.format]
+preview = true
