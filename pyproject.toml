@@ -28,6 +28,9 @@ dev = [
     "pytest>=8.0.0",
     "python-semantic-release>=10.0.0",
     "ty>=0.0.1a21",
+    "zensical>=0.0.46",
+    # docs versioning: zensical-compatible mike fork (same pin as OO-LD/oold-schema)
+    "mike @ git+https://github.com/squidfunk/mike.git@2.2.0+zensical-0.1.0",
 ]
 
 [tool.semantic_release]
@@ -37,6 +40,8 @@ dev = [
 # `copier update` resolves template versions against.
 commit_parser = "conventional"
 tag_format = "v{version}"
+# [skip ci] suppresses all push workflows on the release commit (version
+# bumps only); dropping it would re-run CI, docs and a noop release-main.
 commit_message = "chore(release): v{version} [skip ci]"
 allow_zero_version = true
 build_command = "uv lock"
@@ -102,6 +107,10 @@ ignore = [
     "E501",
     # DoNotAssignLambda
     "E731",
+    # Avoid specifying long messages outside the exception class: a plain
+    # ValueError with a one-line message is the right size for template
+    # scripts; dedicated exception classes would be ceremony without benefit.
+    "TRY003",
 ]
 
 [tool.ruff.lint.per-file-ignores]

@@ -1,0 +1,40 @@
+# Deploy the development documentation on every push to main. Releases deploy
+# the versioned docs from on-release-main.yml; this workflow keeps /dev/
+# current between releases. mike commits the built site to the gh-pages
+# branch, so GitHub Pages must serve from gh-pages
+# (Settings > Pages > Source: Deploy from a branch > gh-pages).
+name: Docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write  # mike pushes to gh-pages
+
+concurrency:
+  group: pages-deploy
+  cancel-in-progress: false
+
+jobs:
+  deploy-dev:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # mike needs the gh-pages branch history
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      # mike commits the built site to gh-pages; GitHub runners have no default
+      # git identity, so `git commit` would fail without this.
+      - name: Configure git identity
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Deploy dev documentation
+        run: uv run mike deploy --push dev
