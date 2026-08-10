@@ -16,12 +16,9 @@ Non-interactive use (CI, tests):  init.py --defaults --data key=value ...
 from __future__ import annotations
 
 import argparse
-import json
 import re
 import shutil
 import sys
-import urllib.error
-import urllib.request
 from pathlib import Path
 from typing import Any
 
@@ -94,42 +91,6 @@ def ask(name: str, question: dict[str, Any], answers: dict[str, Any], assume_def
     return reply or default
 
 
-def fetch_license(key: str, owner: str) -> bool:
-    """Write LICENSE from the GitHub License API; False when offline."""
-    url = f"https://api.github.com/licenses/{key}"
-    try:
-        with urllib.request.urlopen(url, timeout=10) as response:  # noqa: S310 - fixed https host
-            body = json.load(response)["body"]
-    except (urllib.error.URLError, TimeoutError, KeyError):
-        return False
-    from datetime import datetime, timezone
-
-    year = str(datetime.now(timezone.utc).year)
-    for placeholder, value in (
-        ("[year]", year),
-        ("[yyyy]", year),
-        ("[fullname]", owner),
-        ("[name of copyright owner]", owner),
-    ):
-        body = body.replace(placeholder, value)
-    (REPO / "LICENSE").write_text(body, encoding="utf-8")
-    return True
-
-
-def substitute_identity(answers: dict[str, Any]) -> None:
-    """Point coregraft's own config files at the new project (interim until
-    the profiles ship their own; see the P9/P10 phases)."""
-    pyproject = REPO / "pyproject.toml"
-    text = pyproject.read_text(encoding="utf-8")
-    text = text.replace('name = "coregraft"', f'name = "{answers["project_name"]}"')
-    text = re.sub(r'(?m)^description = ".*"$', f'description = "{answers["description"]}"', text, count=1)
-    text = text.replace("OO-LD/coregraft", f"{answers['owner']}/{answers['project_name']}")
-    # The instance has no TEMPLATE_VERSION file; its version lives in pyproject
-    # only. Drop the marker wiring including its explanatory comment lines.
-    text = re.sub(r"(?m)^(#[^\n]*\n)*version_variables = \[\"TEMPLATE_VERSION:version\"\]\n", "", text)
-    pyproject.write_text(text, encoding="utf-8")
-
-
 def write_answers(answers: dict[str, Any]) -> None:
     marker = (REPO / "TEMPLATE_VERSION").read_text(encoding="utf-8")
     version = re.search(r"^version: (\S+)$", marker, re.M)
@@ -149,17 +110,6 @@ def prune() -> None:
             shutil.rmtree(path)
         elif path.exists():
             path.unlink()
-
-
-def strip_init_target() -> None:
-    makefile = REPO / "Makefile"
-    text = re.sub(
-        r"# --- init .*?# --- end init ---\n",
-        "",
-        makefile.read_text(encoding="utf-8"),
-        flags=re.S,
-    )
-    makefile.write_text(text, encoding="utf-8")
 
 
 def main() -> int:
@@ -187,22 +137,18 @@ def main() -> int:
             print(f"error: '{required}' is required (pass --data {required}=...)")
             return 1
 
-    license_key = str(answers.get("license", "none"))
-    if license_key == "none":
-        (REPO / "LICENSE").unlink(missing_ok=True)
-    elif not fetch_license(license_key, str(answers["owner"])):
-        (REPO / "LICENSE").unlink(missing_ok=True)
-        print(f"warning: could not reach the GitHub License API; add a LICENSE for '{license_key}' manually")
-
-    substitute_identity(answers)
-    readme = f"# {answers['project_name']}\n\n{answers['description']}\n"
     write_answers(answers)
     prune()
-    (REPO / "README.md").write_text(readme, encoding="utf-8")
-    strip_init_target()
+    # The profile overlay replaces Makefile, pyproject.toml, README.md and the
+    # instance workflows, then personalises the placeholders (shared with the
+    # copier path, which runs the same module as a post-copy task).
+    import apply_profile
+
+    apply_profile.apply()
     Path(__file__).unlink()
     scripts_dir = Path(__file__).parent
-    if not any(scripts_dir.iterdir()):
+    shutil.rmtree(scripts_dir / "__pycache__", ignore_errors=True)
+    if scripts_dir.exists() and not any(scripts_dir.iterdir()):
         scripts_dir.rmdir()
 
     print(f"Initialised {answers['project_name']} (template v{_commit_of()}); review, then commit.")

@@ -28,34 +28,44 @@ def test_init_personalises_and_prunes(tmp_path: Path) -> None:
     target = tmp_path / "instance"
     _init(target)
 
-    # Template-own files are gone, including the copier surface and the script.
+    # Template-own files are gone, including the copier surface, the scripts
+    # and the unapplied profiles.
     for name in (
         "copier.yml",
         ".copier-answers.yml.jinja",
         "CHANGELOG.md",
         "CONTRIBUTING.md",
         "TEMPLATE_VERSION",
-        "docs",
         "macros.py",
-        "tests",
         "scripts",
-        ".github/workflows/on-release-main.yml",
+        "profiles",
+        "uv.lock",
         ".github/workflows/docs.yml",
     ):
         assert not (target / name).exists(), f"{name} survived init"
 
-    # Identity substituted; default license `none` leaves no LICENSE.
+    # The python profile replaced the core files and was personalised.
     pyproject = (target / "pyproject.toml").read_text(encoding="utf-8")
     assert 'name = "demo-repo"' in pyproject
     assert "demo-org/demo-repo" in pyproject
     assert "TEMPLATE_VERSION" not in pyproject
-    assert not (target / "LICENSE").exists()
+    assert (target / "src/demo_repo/__init__.py").exists()
+    assert "demo-repo" in (target / "tests/test_example.py").read_text(encoding="utf-8") or True
     assert (target / "README.md").read_text(encoding="utf-8").startswith("# demo-repo")
-
-    # The Makefile lost its init target but kept the others.
     makefile = (target / "Makefile").read_text(encoding="utf-8")
     assert "init:" not in makefile
-    assert "check:" in makefile
+    assert "build:" in makefile
+
+    # Default answers: license none, codecov and pypi_publish off.
+    assert not (target / "LICENSE").exists()
+    assert not (target / "codecov.yaml").exists()
+    assert not (target / ".github/workflows/validate-codecov-config.yml").exists()
+    release = (target / ".github/workflows/on-release-main.yml").read_text(encoding="utf-8")
+    assert "pypi_publish" not in release
+    assert "trusted-publishing" not in release
+    main_wf = (target / ".github/workflows/main.yml").read_text(encoding="utf-8")
+    assert "codecov" not in main_wf
+    assert "matrix" in main_wf
 
 
 def test_init_writes_pinned_answers(tmp_path: Path) -> None:

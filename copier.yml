@@ -14,8 +14,10 @@ _message_after_copy: |
       make check
 
 # Files that belong to the template repository itself and must not reach
-# instances. Profile-conditional pruning joins this list when the profiles
-# land. Setting _exclude replaces copier's defaults, so they are repeated.
+# instances. Patterns are anchored with a leading slash: unanchored gitignore
+# patterns match at any depth and would also strip the same-named files out
+# of the profile overlays. Setting _exclude replaces copier's defaults, so
+# they are repeated.
 _exclude:
     - "copier.yml"
     - "~*"
@@ -24,15 +26,23 @@ _exclude:
     - ".git"
     - ".DS_Store"
     # template-own content, not for instances
-    - "CHANGELOG.md"
-    - "TEMPLATE_VERSION"
-    - "CONTRIBUTING.md"
-    - "README.md"
-    - "docs"
-    - "macros.py"
-    - "tests"
-    - ".github/workflows/on-release-main.yml"
-    - ".github/workflows/docs.yml"
+    - "/CHANGELOG.md"
+    - "/TEMPLATE_VERSION"
+    - "/CONTRIBUTING.md"
+    - "/README.md"
+    - "/docs"
+    - "/macros.py"
+    - "/tests"
+    - "/uv.lock"
+    - "/.github/workflows/on-release-main.yml"
+    - "/.github/workflows/docs.yml"
+    # the button-path bootstrap; copier personalises via _tasks instead
+    - "/scripts/init.py"
+
+# Post-copy: apply the profile overlay and personalise (the same module the
+# button path runs through `make init`). Requires `copier copy --trust`.
+_tasks:
+    - ["uv", "run", "--no-project", "scripts/apply_profile.py"]
 
 profile:
     type: str
