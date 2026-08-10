@@ -7,6 +7,19 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.7.0 (2026-08-10)
+
+### Bug Fixes
+
+- **template**: Keep generated files clean when a marker block is stripped
+  ([`7c4b5dd`](https://github.com/OO-LD/coregraft/commit/7c4b5dd627651f580bf82232bbac922d2e5a232d))
+
+### Features
+
+- **template**: Add optional citation, docker, devcontainer and benchmark layers
+  ([`75c2c70`](https://github.com/OO-LD/coregraft/commit/75c2c70a11fb10134c87b9baaceee8980c11c4ac))
+
+
 ## v0.6.0 (2026-08-10)
 
 ### Bug Fixes
