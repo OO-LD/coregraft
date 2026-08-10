@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.5.0 (2026-08-10)
+
+### Features
+
+- **profile**: Add python profile overlay
+  ([`6810909`](https://github.com/OO-LD/coregraft/commit/68109094b5a7d509dc53fa82cc52db99471c7696))
+
+
 ## v0.4.0 (2026-08-10)
 
 ### Features
