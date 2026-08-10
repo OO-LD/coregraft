@@ -61,3 +61,40 @@ jobs:
 
       - name: Check if documentation can be built
         run: make docs-test
+
+  # The self-test gate: generate every profile through the button path
+  # (full copy + make init) and run the generated repository's own check
+  # suite. A red profile blocks the merge, so no broken core ever reaches a
+  # grafted repository through an update.
+  test-profiles:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        profile: [python]
+      fail-fast: false
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Generate an instance (button path)
+        run: |
+          instance="$RUNNER_TEMP/instance"
+          rsync -a --exclude .git --exclude .venv --exclude site ./ "$instance/"
+          cd "$instance"
+          uv run scripts/init.py --defaults \
+            --data profile=${{ matrix.profile }} \
+            --data project_name=selftest-repo \
+            --data owner=selftest-org \
+            --data description="Profile self-test"
+          git init -q && git add -A   # pre-commit and uv need a git work tree
+
+      - name: Run the instance's own checks
+        run: |
+          cd "$RUNNER_TEMP/instance"
+          make install
+          make check
+          make test
+          make docs-test

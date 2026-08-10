@@ -62,6 +62,11 @@ insertion_flag = "<!-- version list -->"
 [tool.semantic_release.changelog.default_templates]
 changelog_file = "CHANGELOG.md"
 
+[tool.ty.src]
+# Profile overlays reference instance-only modules; the CI self-test job type
+# checks them inside a generated instance instead.
+exclude = ["profiles"]
+
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 
