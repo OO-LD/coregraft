@@ -231,3 +231,7 @@ AGENTS.md
 # coregraft: schema profile stages schemas into the docs tree
 /docs/schemas/
 node_modules/
+
+# python profile: benchmark artifacts
+.benchmarks/
+benchmark_results.json

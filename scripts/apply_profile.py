@@ -33,9 +33,27 @@ PLACEHOLDER_DESCRIPTION = "A coregraft example project"
 # Files deleted entirely when the answer for the key is falsy.
 OPTOUT_FILES: dict[str, list[str]] = {
     "codecov": ["codecov.yaml", ".github/workflows/validate-codecov-config.yml"],
+    "citation": ["CITATION.cff"],
+    "dockerfile": ["Dockerfile", ".dockerignore"],
+    "devcontainer": [".devcontainer"],
+    "benchmarks": ["pytest.benchmark.ini", "tests/benchmarks", "scripts/compare_benchmarks.py"],
 }
 
-TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".cfg", ".ini", ".txt", ".json", ".mjs", ".html", ""}
+TEXT_SUFFIXES = {
+    ".py",
+    ".md",
+    ".toml",
+    ".yml",
+    ".yaml",
+    ".cfg",
+    ".cff",
+    ".ini",
+    ".txt",
+    ".json",
+    ".mjs",
+    ".html",
+    "",  # "" covers Dockerfile, Makefile and friends
+}
 
 
 def read_answers() -> dict[str, str]:
@@ -81,8 +99,12 @@ def strip_markers(answers: dict[str, str]) -> None:
             if truthy(answers.get(key, "")):
                 text = re.sub(rf"[ \t]*# (?:>>>|<<<) {key}\n", "", text)
             else:
-                text = re.sub(rf"[ \t]*# >>> {key}\n.*?[ \t]*# <<< {key}\n", "", text, flags=re.S)
-        path.write_text(text, encoding="utf-8")
+                # Consume one blank line before the block too, otherwise
+                # removing a trailing block leaves the file ending in a blank
+                # line and end-of-file-fixer rewrites it on the first commit.
+                text = re.sub(rf"\n?[ \t]*# >>> {key}\n.*?[ \t]*# <<< {key}\n", "\n", text, flags=re.S)
+        # Whatever the surgery left behind, the file ends with exactly one newline.
+        path.write_text(text.rstrip("\n") + "\n", encoding="utf-8")
 
 
 def prune_optouts(answers: dict[str, str]) -> None:
@@ -91,7 +113,9 @@ def prune_optouts(answers: dict[str, str]) -> None:
             continue
         for name in files:
             path = REPO / name
-            if path.exists():
+            if path.is_dir():
+                shutil.rmtree(path)
+            elif path.exists():
                 path.unlink()
 
 

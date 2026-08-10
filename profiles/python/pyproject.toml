@@ -27,6 +27,9 @@ dev = [
     "pre-commit>=4.0.0",
     "pytest>=8.0.0",
     "pytest-cov>=6.0.0",
+    # >>> benchmarks
+    "pytest-benchmark>=5.0.0",
+    # <<< benchmarks
     "python-semantic-release>=10.0.0",
     "ty>=0.0.1a21",
     "zensical>=0.0.46",
@@ -46,6 +49,9 @@ commit_message = "chore(release): v{version} [skip ci]"
 allow_zero_version = true
 build_command = "uv lock"
 version_toml = ["pyproject.toml:project.version"]
+# >>> citation
+version_variables = ["CITATION.cff:version"]
+# <<< citation
 exclude_commit_patterns = ['''chore\(release\):.*''']
 assets = ["uv.lock"]
 

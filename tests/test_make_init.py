@@ -93,3 +93,23 @@ def test_init_guards_copier_generated_instances(tmp_path: Path) -> None:
     assert b"Already initialised" in result.stdout
     assert (target / "Makefile").exists()
     assert (target / "scripts/init.py").exists()
+
+
+def test_init_defaults_to_the_git_remote(tmp_path: Path) -> None:
+    # On the button path the clone knows its own repository, so owner and
+    # project name default to it instead of being retyped.
+    target = tmp_path / "instance"
+    shutil.copytree(REPO, target, ignore=IGNORE)
+    subprocess.run(["git", "init", "-q"], cwd=target, check=True)  # noqa: S607
+    remote = ["git", "remote", "add", "origin", "git@github.com:remote-org/remote-repo.git"]
+    subprocess.run(remote, cwd=target, check=True)  # noqa: S603
+    subprocess.run(  # noqa: S603
+        [sys.executable, str(target / "scripts/init.py"), "--defaults", "--data", "description=From remote"],
+        check=True,
+        capture_output=True,
+    )
+    answers = yaml.safe_load((target / ".copier-answers.yml").read_text(encoding="utf-8"))
+    assert answers["owner"] == "remote-org"
+    assert answers["project_name"] == "remote-repo"
+    assert answers["package_name"] == "remote_repo"
+    assert "remote-org/remote-repo" in (target / "pyproject.toml").read_text(encoding="utf-8")

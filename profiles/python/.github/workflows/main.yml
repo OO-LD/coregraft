@@ -69,3 +69,60 @@ jobs:
 
       - name: Check if documentation can be built
         run: make docs-test
+
+  # >>> benchmarks
+  # Continuous benchmarking with Bencher: pytest-benchmark produces the JSON,
+  # `bencher run` uploads it and comments the comparison against the base
+  # branch, using statistical boundary models instead of a fixed ratio.
+  #
+  # Setup: create a project at https://bencher.dev (free for public repos),
+  # then add the BENCHER_API_TOKEN secret and set BENCHER_PROJECT below. Until
+  # the secret exists the benchmarks still run and upload their results as an
+  # artifact; only the tracking step is skipped.
+  benchmark:
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request' && github.event.pull_request.draft == false
+    permissions:
+      contents: read
+      pull-requests: write
+    env:
+      BENCHER_PROJECT: coregraft-example
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Run benchmarks
+        run: make benchmark
+
+      - name: Track benchmarks with Bencher
+        if: ${{ secrets.BENCHER_API_TOKEN != '' }}
+        uses: bencherdev/bencher@main
+
+      - name: Upload results to Bencher
+        if: ${{ secrets.BENCHER_API_TOKEN != '' }}
+        run: |
+          bencher run \
+            --project "$BENCHER_PROJECT" \
+            --token "${{ secrets.BENCHER_API_TOKEN }}" \
+            --branch "$GITHUB_HEAD_REF" \
+            --start-point "$GITHUB_BASE_REF" \
+            --start-point-hash "${{ github.event.pull_request.base.sha }}" \
+            --start-point-clone-thresholds \
+            --start-point-reset \
+            --testbed ubuntu-latest \
+            --adapter python_pytest \
+            --err \
+            --github-actions "${{ secrets.GITHUB_TOKEN }}" \
+            --file benchmark_results.json
+
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: benchmark-results
+          path: benchmark_results.json
+          retention-days: 30
+  # <<< benchmarks

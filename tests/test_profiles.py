@@ -18,21 +18,23 @@ PROFILES = sorted(p.name for p in (REPO / "profiles").iterdir() if p.is_dir())
 IGNORE = shutil.ignore_patterns(".git", ".venv", "site", "node_modules", "__pycache__", ".pytest_cache", ".ruff_cache")
 
 
-def _generate(target: Path, profile: str) -> None:
+def _generate(target: Path, profile: str, *extra: str) -> None:
     shutil.copytree(REPO, target, ignore=IGNORE)
+    data: list[str] = []
+    for pair in (
+        f"profile={profile}",
+        "project_name=demo-repo",
+        "owner=demo-org",
+        "description=A demo",
+        *extra,
+    ):
+        data += ["--data", pair]
     subprocess.run(  # noqa: S603
         [
             sys.executable,
             str(target / "scripts/init.py"),
             "--defaults",
-            "--data",
-            f"profile={profile}",
-            "--data",
-            "project_name=demo-repo",
-            "--data",
-            "owner=demo-org",
-            "--data",
-            "description=A demo",
+            *data,
         ],
         check=True,
         capture_output=True,
@@ -92,3 +94,78 @@ def test_python_profile_ships_a_package(tmp_path: Path) -> None:
     assert (target / "src/demo_repo/__init__.py").exists()
     assert (target / "tests/test_example.py").exists()
     assert "hatchling" in (target / "pyproject.toml").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_profile_declares_its_own_ruff_config(profile: str) -> None:
+    # apply_profile replaces the root pyproject.toml wholesale, so a profile
+    # without ruff config silently falls back to ruff's defaults (88 columns)
+    # and reformats files written at 120. Caught once in CI; guarded here.
+    pyproject = (REPO / "profiles" / profile / "pyproject.toml").read_text(encoding="utf-8")
+    assert "[tool.ruff]" in pyproject, f"{profile}: no [tool.ruff]"
+    assert "line-length = 120" in pyproject, f"{profile}: ruff line-length differs"
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_optout_layers_are_pruned_by_default(tmp_path: Path, profile: str) -> None:
+    target = tmp_path / profile
+    _generate(target, profile)
+    # Every opt-in defaults to false, so none of these may survive.
+    for name in ("CITATION.cff", "Dockerfile", ".devcontainer", "pytest.benchmark.ini", "codecov.yaml"):
+        assert not (target / name).exists(), f"{profile}: opt-out {name} survived"
+    pyproject = (target / "pyproject.toml").read_text(encoding="utf-8")
+    assert "CITATION.cff" not in pyproject
+    assert "pytest-benchmark" not in pyproject
+
+
+def test_optin_layers_are_kept_when_selected(tmp_path: Path) -> None:
+    target = tmp_path / "python-full"
+    _generate(target, "python", "citation=true", "dockerfile=true", "devcontainer=true", "benchmarks=true")
+    for name in ("CITATION.cff", "Dockerfile", ".devcontainer", "pytest.benchmark.ini"):
+        path = target / name
+        assert path.exists(), f"opt-in {name} was pruned"
+        # Opt-in files are personalised too; the default-answers sweep cannot
+        # see them, so check here (CITATION.cff was missed exactly this way).
+        if path.is_file():
+            text = path.read_text(encoding="utf-8")
+            assert "coregraft-example" not in text, f"{name} kept the placeholder project"
+            assert "coregraft-owner" not in text, f"{name} kept the placeholder owner"
+    # The repository LICENSE is the single source of truth: no static SPDX id
+    # in CITATION.cff, which would drift when the license changes.
+    assert "license:" not in (target / "CITATION.cff").read_text(encoding="utf-8")
+    pyproject = (target / "pyproject.toml").read_text(encoding="utf-8")
+    assert 'version_variables = ["CITATION.cff:version"]' in pyproject
+    assert "pytest-benchmark" in pyproject
+    # Benchmarks are tracked with Bencher, but must degrade gracefully until
+    # the repository has a BENCHER_API_TOKEN.
+    workflow = (target / ".github/workflows/main.yml").read_text(encoding="utf-8")
+    assert "bencherdev/bencher" in workflow
+    assert "secrets.BENCHER_API_TOKEN != ''" in workflow
+    # Marker comments must not survive into the instance.
+    assert "# >>> citation" not in pyproject
+    assert "# <<< benchmarks" not in (target / "Makefile").read_text(encoding="utf-8")
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_generated_files_are_pre_commit_clean(tmp_path: Path, profile: str) -> None:
+    # Marker stripping must not leave trailing blank lines or a missing final
+    # newline: end-of-file-fixer would rewrite the file on the first commit,
+    # which failed CI once for the benchmarks block in main.yml.
+    target = tmp_path / profile
+    _generate(target, profile)
+    for path in target.rglob("*"):
+        # Skip caches and other tool-owned dot directories; only the files the
+        # template actually ships are subject to pre-commit.
+        if any(part.startswith(".") and part not in (".github", ".devcontainer") for part in path.parts):
+            continue
+        if not path.is_file() or path.suffix in (".png", ".ico"):
+            continue
+        try:
+            text = path.read_text(encoding="utf-8")
+        except (UnicodeDecodeError, OSError):
+            continue
+        if not text:
+            continue
+        assert text.endswith("\n"), f"{path.name}: no final newline"
+        assert not text.endswith("\n\n"), f"{path.name}: trailing blank line"
+        assert ">>>" not in text and "<<<" not in text, f"{path.name}: marker survived"
