@@ -1,0 +1,35 @@
+# The schema profile publishes schemas and a specification, not a package.
+# uv manages only the tooling below (docs, versioning, hooks).
+[project]
+name = "coregraft-example"
+description = "A coregraft example project"
+version = "0.1.0"
+requires-python = ">=3.10,<4.0"
+
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "mike @ git+https://github.com/squidfunk/mike.git@2.2.0+zensical-0.1.0",
+    "pre-commit>=4.0.0",
+    "python-semantic-release>=10.0.0",
+    "zensical>=0.0.46",
+]
+
+[tool.semantic_release]
+commit_parser = "conventional"
+tag_format = "v{version}"
+commit_message = "chore(release): v{version} [skip ci]"
+allow_zero_version = true
+build_command = "uv lock"
+version_toml = ["pyproject.toml:project.version"]
+exclude_commit_patterns = ['''chore\(release\):.*''']
+assets = ["uv.lock"]
+
+[tool.semantic_release.changelog]
+mode = "update"
+insertion_flag = "<!-- version list -->"
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"

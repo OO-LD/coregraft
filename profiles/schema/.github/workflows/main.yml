@@ -1,0 +1,57 @@
+name: Main
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/pre-commit
+          key: pre-commit-${{ hashFiles('.pre-commit-config.yaml') }}
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Install Node dependencies
+        run: npm install
+
+      - name: Validate schemas and instances
+        run: npm run validate
+
+      - name: Render the specification
+        run: uv run scripts/render_spec.py
+
+      # Drift guard: the committed spec must match its source, so the published
+      # specification can never lag behind spec/sections/.
+      - name: Check the rendered spec is up to date
+        run: git diff --exit-code docs/spec/index.html
+
+      - name: Lint
+        run: uv run pre-commit run -a
+
+  check-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out
+        uses: actions/checkout@v4
+
+      - name: Set up the environment
+        uses: ./.github/actions/setup-python-env
+
+      - name: Check if documentation can be built
+        run: make docs-test

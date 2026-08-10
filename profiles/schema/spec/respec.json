@@ -1,0 +1,9 @@
+{
+  "title": "coregraft-example Specification",
+  "abstract": "This document specifies the coregraft-example vocabulary and its JSON Schema representation.",
+  "specStatus": "unofficial",
+  "editors": [{ "name": "coregraft-owner" }],
+  "github": "coregraft-owner/coregraft-example",
+  "shortName": "coregraft-example",
+  "format": "markdown"
+}

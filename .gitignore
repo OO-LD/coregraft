@@ -227,3 +227,7 @@ AGENTS.md
 
 # coregraft: generated during profile self-tests
 .coregraft-build/
+
+# coregraft: schema profile stages schemas into the docs tree
+/docs/schemas/
+node_modules/

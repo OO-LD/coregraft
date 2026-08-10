@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "Person.schema.json",
+  "title": "Person",
+  "description": "An example schema; replace it with your own.",
+  "@context": {
+    "name": "http://schema.org/name",
+    "email": { "@id": "http://schema.org/email" },
+    "knows": { "@id": "http://schema.org/knows", "@type": "@id" }
+  },
+  "type": "object",
+  "required": ["name"],
+  "properties": {
+    "name": { "type": "string" },
+    "email": { "type": "string", "format": "email" },
+    "knows": { "type": "array", "items": { "type": "string", "format": "iri-reference" } }
+  }
+}
