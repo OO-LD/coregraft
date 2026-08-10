@@ -1,6 +1,12 @@
 # coregraft's own task runner. Instances get their Makefile from
 # profiles/<name>/; this one lints and tests the template repository itself.
 
+# --- init (template bootstrap; removed by `make init`) ---
+.PHONY: init
+init: ## Personalise this repository (first run after "Use this template")
+	@uv run scripts/init.py
+# --- end init ---
+
 .PHONY: install
 install: ## Install the virtual environment and the pre-commit hooks
 	@echo "🚀 Creating virtual environment using uv"
