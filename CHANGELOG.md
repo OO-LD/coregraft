@@ -7,6 +7,24 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.8.1 (2026-08-10)
+
+### Bug Fixes
+
+- **ci**: Exclude dependency directories from link checking
+  ([`88fa985`](https://github.com/OO-LD/coregraft/commit/88fa98500ae85854f4233e6313fb2cfcaa81dd76))
+
+### Build System
+
+- Check untracked files locally and add a ci target
+  ([`976fd55`](https://github.com/OO-LD/coregraft/commit/976fd552ddb3bacc2294a2b14a1ad30f3a30abcd))
+
+### Testing
+
+- Verify both generation paths produce identical output
+  ([`cc28870`](https://github.com/OO-LD/coregraft/commit/cc28870fbf1f6e83af72d01a5ce766597e2df627))
+
+
 ## v0.8.0 (2026-08-10)
 
 ### Features
