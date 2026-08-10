@@ -42,6 +42,7 @@ TEMPLATE_ONLY = [
     ".github/workflows/docs.yml",
     "copier.yml",
     ".copier-answers.yml.jinja",
+    "scripts/track_instances.py",
 ]
 
 TEMPLATE_URL = "https://github.com/OO-LD/coregraft"

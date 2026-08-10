@@ -5,6 +5,7 @@ runs the generated repository's own suite). These tests are the fast local
 guard on the assembly rules themselves.
 """
 
+import re
 import shutil
 import subprocess
 import sys
@@ -72,7 +73,9 @@ def test_profile_assembles_a_complete_repository(tmp_path: Path, profile: str) -
         assert (target / name).exists(), f"{profile}: missing {name}"
     for name in ("profiles", "copier.yml", "scripts/apply_profile.py"):
         assert not (target / name).exists(), f"{profile}: {name} survived"
-    for workflow in ("main.yml", "on-release-main.yml", "linkcheck.yml"):
+    # The update workflow ships to instances; the registry script does not.
+    assert not (target / "scripts/track_instances.py").exists()
+    for workflow in ("main.yml", "on-release-main.yml", "linkcheck.yml", "template-update.yml"):
         assert (target / ".github/workflows" / workflow).exists(), f"{profile}: missing {workflow}"
 
 
@@ -168,4 +171,5 @@ def test_generated_files_are_pre_commit_clean(tmp_path: Path, profile: str) -> N
             continue
         assert text.endswith("\n"), f"{path.name}: no final newline"
         assert not text.endswith("\n\n"), f"{path.name}: trailing blank line"
-        assert ">>>" not in text and "<<<" not in text, f"{path.name}: marker survived"
+        # Only our own marker syntax; prose about git conflict markers is fine.
+        assert not re.search(r"# (?:>>>|<<<) \w+", text), f"{path.name}: marker survived"
