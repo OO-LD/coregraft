@@ -26,8 +26,35 @@ package = false
 dev = [
     "pre-commit>=4.0.0",
     "pytest>=8.0.0",
+    "python-semantic-release>=10.0.0",
     "ty>=0.0.1a21",
 ]
+
+[tool.semantic_release]
+# python-semantic-release owns the version and changelog. On merge to main it
+# reads the conventional commits, bumps the static version in the files below,
+# updates the changelog, commits, and tags. The v-prefixed tags are also what
+# `copier update` resolves template versions against.
+commit_parser = "conventional"
+tag_format = "v{version}"
+commit_message = "chore(release): v{version} [skip ci]"
+allow_zero_version = true
+build_command = "uv lock"
+version_toml = ["pyproject.toml:project.version"]
+# TEMPLATE_VERSION is the instance-facing version marker: `make init` reads it
+# and pins it as `_commit` in .copier-answers.yml.
+version_variables = ["TEMPLATE_VERSION:version"]
+exclude_commit_patterns = ['''chore\(release\):.*''']
+# uv.lock pins coregraft's own version, so re-lock (build_command) and include
+# it in the release commit to keep `uv sync --frozen` consistent on the next run.
+assets = ["uv.lock"]
+
+[tool.semantic_release.changelog]
+mode = "update"
+insertion_flag = "<!-- version list -->"
+
+[tool.semantic_release.changelog.default_templates]
+changelog_file = "CHANGELOG.md"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
