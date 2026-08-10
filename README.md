@@ -14,7 +14,7 @@ git clone https://github.com/<owner>/<repo>.git && cd <repo> && make init
 
 `make init` asks for the profile, name, owner, license and optional extras, personalises the repository, removes what you did not ask for, and removes itself. No other tool to install.
 
-That is the whole workflow. There is no separate tool to install first.
+That is the whole workflow. The only prerequisites are [uv](https://docs.astral.sh/uv/) and `make`; uv brings its own Python if none is installed.
 
 ## Profiles
 
