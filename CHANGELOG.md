@@ -6,3 +6,7 @@ automatically from Conventional Commits on every merge to main by
 not edit released sections by hand.
 
 <!-- version list -->
+
+## v0.1.0 (2026-08-10)
+
+- Initial Release
