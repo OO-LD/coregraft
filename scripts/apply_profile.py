@@ -33,9 +33,27 @@ PLACEHOLDER_DESCRIPTION = "A coregraft example project"
 # Files deleted entirely when the answer for the key is falsy.
 OPTOUT_FILES: dict[str, list[str]] = {
     "codecov": ["codecov.yaml", ".github/workflows/validate-codecov-config.yml"],
+    "citation": ["CITATION.cff"],
+    "dockerfile": ["Dockerfile", ".dockerignore"],
+    "devcontainer": [".devcontainer"],
+    "benchmarks": ["pytest.benchmark.ini", "tests/benchmarks", "scripts/compare_benchmarks.py"],
 }
 
-TEXT_SUFFIXES = {".py", ".md", ".toml", ".yml", ".yaml", ".cfg", ".ini", ".txt", ".json", ".mjs", ".html", ""}
+TEXT_SUFFIXES = {
+    ".py",
+    ".md",
+    ".toml",
+    ".yml",
+    ".yaml",
+    ".cfg",
+    ".cff",
+    ".ini",
+    ".txt",
+    ".json",
+    ".mjs",
+    ".html",
+    "",  # "" covers Dockerfile, Makefile and friends
+}
 
 
 def read_answers() -> dict[str, str]:
@@ -91,7 +109,9 @@ def prune_optouts(answers: dict[str, str]) -> None:
             continue
         for name in files:
             path = REPO / name
-            if path.exists():
+            if path.is_dir():
+                shutil.rmtree(path)
+            elif path.exists():
                 path.unlink()
 
 

@@ -18,6 +18,7 @@ from __future__ import annotations
 import argparse
 import re
 import shutil
+import subprocess
 import sys
 from pathlib import Path
 from typing import Any
@@ -44,6 +45,29 @@ TEMPLATE_ONLY = [
 ]
 
 TEMPLATE_URL = "https://github.com/OO-LD/coregraft"
+
+
+def repo_from_git_remote() -> tuple[str, str] | None:
+    """The (owner, name) this repository was created as, from `origin`.
+
+    On the button path the clone already knows where it lives, so the answers
+    can default to the real repository instead of being retyped (and possibly
+    mistyped into CITATION.cff, zensical.toml and the project URLs).
+    """
+    try:
+        url = subprocess.run(
+            ["git", "remote", "get-url", "origin"],  # noqa: S607
+            check=True,
+            capture_output=True,
+            text=True,
+            cwd=REPO,
+        ).stdout.strip()
+    except (subprocess.CalledProcessError, FileNotFoundError):
+        return None
+    match = re.search(r"[:/]([^/:]+)/([^/]+?)(?:\.git)?$", url)
+    if match is None:
+        return None
+    return match.group(1), match.group(2)
 
 
 def load_questions() -> dict[str, dict[str, Any]]:
@@ -127,7 +151,14 @@ def main() -> int:
         key, _, value = pair.partition("=")
         answers[key] = value
 
-    for name, question in load_questions().items():
+    questions = load_questions()
+    remote = repo_from_git_remote()
+    if remote is not None:
+        owner, name = remote
+        questions["owner"] = {**questions["owner"], "default": owner}
+        questions["project_name"] = {**questions["project_name"], "default": name}
+
+    for name, question in questions.items():
         if name in answers or not applies(question, answers):
             continue
         answers[name] = ask(name, question, answers, args.defaults)

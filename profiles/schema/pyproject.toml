@@ -24,6 +24,9 @@ commit_message = "chore(release): v{version} [skip ci]"
 allow_zero_version = true
 build_command = "uv lock"
 version_toml = ["pyproject.toml:project.version"]
+# >>> citation
+version_variables = ["CITATION.cff:version"]
+# <<< citation
 exclude_commit_patterns = ['''chore\(release\):.*''']
 assets = ["uv.lock"]
 
