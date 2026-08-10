@@ -1,0 +1,85 @@
+# coregraft's own project file. It lints and tests the template repository
+# itself; the pyproject an instance receives lives in profiles/<name>/ and is
+# put in place by `make init`.
+[project]
+name = "coregraft"
+description = "Profiled GitHub template with full automation from commit to release"
+authors = [{ name = "OO-LD", email = "team@opensemantic.world" }]
+readme = "README.md"
+license = "Apache-2.0"
+license-files = ["LICENSE"]
+keywords = ["template", "github-template", "copier", "uv", "semantic-release"]
+requires-python = ">=3.10,<4.0"
+# Version is managed by python-semantic-release from conventional commits
+# (wired up in a later phase). Do not edit by hand.
+version = "0.0.0"
+
+[project.urls]
+Repository = "https://github.com/OO-LD/coregraft"
+
+# coregraft is not a distributable package: there is no build backend and
+# nothing to install. uv manages only the dev environment below.
+[tool.uv]
+package = false
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.0.0",
+    "pytest>=8.0.0",
+    "ty>=0.0.1a21",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.ruff]
+target-version = "py310"
+line-length = 120
+fix = true
+
+[tool.ruff.lint]
+select = [
+    # flake8-2020
+    "YTT",
+    # flake8-bandit
+    "S",
+    # flake8-bugbear
+    "B",
+    # flake8-builtins
+    "A",
+    # flake8-comprehensions
+    "C4",
+    # flake8-debugger
+    "T10",
+    # flake8-simplify
+    "SIM",
+    # isort
+    "I",
+    # mccabe
+    "C90",
+    # pycodestyle
+    "E", "W",
+    # pyflakes
+    "F",
+    # pygrep-hooks
+    "PGH",
+    # pyupgrade
+    "UP",
+    # ruff
+    "RUF",
+    # tryceratops
+    "TRY",
+]
+ignore = [
+    # LineTooLong: the formatter owns line width
+    "E501",
+    # DoNotAssignLambda
+    "E731",
+]
+
+[tool.ruff.lint.per-file-ignores]
+# pytest tests assert on purpose
+"tests/*" = ["S101"]
+
+[tool.ruff.format]
+preview = true
