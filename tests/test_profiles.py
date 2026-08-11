@@ -324,5 +324,6 @@ def test_generated_files_are_pre_commit_clean(tmp_path: Path, profile: str) -> N
             continue
         assert text.endswith("\n"), f"{path.name}: no final newline"
         assert not text.endswith("\n\n"), f"{path.name}: trailing blank line"
-        # Only our own marker syntax; prose about git conflict markers is fine.
-        assert not re.search(r"# (?:>>>|<<<) \w+", text), f"{path.name}: marker survived"
+        # Only our own marker syntax, in either spelling; prose about git
+        # conflict markers is fine.
+        assert not re.search(r"(?:#|<!--) (?:>>>|<<<) \w+", text), f"{path.name}: marker survived"

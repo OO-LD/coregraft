@@ -110,12 +110,41 @@ def test_copier_update_backports_into_a_generated_repository(tmp_path: Path, pro
 @pytest.mark.parametrize("profile", PROFILES)
 def test_every_profile_ships_the_update_workflow(profile: str) -> None:
     workflow = (REPO / "profiles" / profile / ".github/workflows/template-update.yml").read_text(encoding="utf-8")
-    # Needs no secret: the built-in token opens the pull request.
-    assert "secrets." not in workflow
     # Conflicts must surface for a human instead of being overwritten.
     assert "--conflict inline" in workflow
     assert "copier update" in workflow
     assert "peter-evans/create-pull-request" in workflow
+    # The pull request must be pushed with an App token. GitHub refuses to let
+    # the built-in token create or update anything under .github/workflows/,
+    # and template updates routinely do; a real backport failed on exactly
+    # that. There is no `workflows` permission to grant GITHUB_TOKEN.
+    assert "steps.app-token.outputs.token" in workflow, f"{profile}: PR pushed with a token that cannot write workflows"
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_the_update_falls_back_to_an_issue_without_a_bot(tmp_path: Path, profile: str) -> None:
+    # Not every repository will install a GitHub App, and none should be left
+    # without a way to learn that the template moved. The fallback opens an
+    # issue with the command to run locally, where a maintainer's own
+    # credentials may write workflow files.
+    instance = tmp_path / profile
+    shutil.copytree(REPO, instance, ignore=IGNORE)
+    data: list[str] = []
+    for pair in (f"profile={profile}", "project_name=demo-repo", "owner=demo-org", "description=A demo"):
+        data += ["--data", pair]
+    _run(sys.executable, str(instance / "scripts/init.py"), "--defaults", *data, cwd=instance)
+
+    spec = yaml.safe_load((instance / ".github/workflows/template-update.yml").read_text(encoding="utf-8"))
+    assert spec["permissions"]["issues"] == "write", "cannot open the fallback issue without this"
+    steps = {step.get("name", ""): step for step in spec["jobs"]["update"]["steps"]}
+    # update_bot defaults to false, so the whole App path is stripped.
+    assert "Generate app token" not in steps
+    assert "Open a pull request" not in steps
+    fallback = steps["Open an issue instead"]
+    # A step id that never ran yields an empty conclusion, so the condition
+    # holds both when the App path was stripped and when its secret is absent.
+    assert "steps.pr.conclusion" in fallback["if"]
+    assert "copier update" in fallback["run"], "the issue must name the command to run"
 
 
 def test_registry_reads_the_template_version() -> None:
