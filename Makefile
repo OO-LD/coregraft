@@ -5,6 +5,16 @@
 .PHONY: init
 init: ## Personalise this repository (first run after "Use this template")
 	@uv run scripts/init.py
+	@# The profile's Makefile is in place by now, so this re-invocation picks up
+	@# its `install` target. Creating the environment here is not a convenience:
+	@# `make check` starts with `uv lock --locked`, so without a committed
+	@# uv.lock the very first push of a new repository fails CI.
+	@$(MAKE) --no-print-directory install
+	@# printf, not echo: echo expands the \a in the Windows path to a bell.
+	@printf '\n✅ Ready. Activate the environment with:\n'
+	@printf '     %s\n' 'source .venv/bin/activate   (macOS, Linux)'
+	@printf '     %s\n' '.venv\Scripts\activate      (Windows)'
+	@printf '   Or prefix commands with "uv run". Then review and commit.\n'
 # --- end init ---
 
 .PHONY: install

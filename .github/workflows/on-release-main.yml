@@ -22,6 +22,11 @@ concurrency:
 
 jobs:
   release:
+    # Only in the template repository itself. "Use this template" copies this
+    # file, and the copy's initial commit ran it before `make init` could
+    # delete it, failing on the App secrets the new repository does not have.
+    # That made every generated repository look broken on arrival.
+    if: github.event.repository.is_template
     runs-on: ubuntu-latest
     permissions:
       contents: write   # push the release commit and tag, create the GitHub release

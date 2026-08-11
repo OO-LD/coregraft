@@ -186,6 +186,48 @@ def test_optin_layers_are_kept_when_selected(tmp_path: Path) -> None:
 
 
 @pytest.mark.parametrize("profile", PROFILES)
+def test_release_skips_cleanly_without_the_app_secret(tmp_path: Path, profile: str) -> None:
+    # A repository that has not configured a release App is not broken. Before
+    # this guard the release job failed on every push with "appId option is
+    # required", which is how a freshly generated repository first looked.
+    target = tmp_path / profile
+    _generate(target, profile)
+    workflow = yaml.safe_load((target / ".github/workflows/on-release-main.yml").read_text(encoding="utf-8"))
+    assert "check-setup" in workflow["jobs"], f"{profile}: no setup guard job"
+    release = workflow["jobs"]["release"]
+    assert release["needs"] == "check-setup"
+    assert "check-setup.outputs.configured" in release["if"]
+
+
+@pytest.mark.parametrize("workflow", ["docs.yml", "on-release-main.yml"])
+def test_template_own_workflows_only_run_in_the_template(workflow: str) -> None:
+    # "Use this template" copies the whole tree, so these run once in the new
+    # repository before `make init` deletes them. Unguarded, the release job
+    # failed and the docs job pushed coregraft's own site to the new
+    # repository's gh-pages branch. A generated repository is not a template.
+    spec = yaml.safe_load((REPO / ".github/workflows" / workflow).read_text(encoding="utf-8"))
+    guarded: set[str] = set()
+    for name, job in spec["jobs"].items():
+        needs = job.get("needs", [])
+        needs = [needs] if isinstance(needs, str) else needs
+        # Either guarded directly, or downstream of a job that is: GitHub skips
+        # a job whose dependency was skipped.
+        if job.get("if") == "github.event.repository.is_template" or any(n in guarded for n in needs):
+            guarded.add(name)
+    assert guarded == set(spec["jobs"]), f"{workflow}: unguarded jobs {set(spec['jobs']) - guarded}"
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_readme_documents_make_ci_first(profile: str) -> None:
+    # `make ci` is the one command that mirrors CI, and it was discoverable
+    # only by running `make help`.
+    readme = (REPO / "profiles" / profile / "README.md").read_text(encoding="utf-8")
+    assert "make ci" in readme, f"{profile}: README does not mention make ci"
+    for target in ("make check", "make test", "make docs-test", "make install"):
+        assert target in readme, f"{profile}: README does not mention {target}"
+
+
+@pytest.mark.parametrize("profile", PROFILES)
 def test_generated_files_are_pre_commit_clean(tmp_path: Path, profile: str) -> None:
     # Marker stripping must not leave trailing blank lines or a missing final
     # newline: end-of-file-fixer would rewrite the file on the first commit,

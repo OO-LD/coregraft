@@ -108,6 +108,46 @@ def test_init_guards_copier_generated_instances(tmp_path: Path) -> None:
     assert (target / "scripts/init.py").exists()
 
 
+def test_init_warns_when_the_answers_contradict_the_remote(tmp_path: Path) -> None:
+    # Answering a different owner does not move the repository, it only writes
+    # the wrong owner into pyproject.toml and every documentation URL. Nothing
+    # fails, which is exactly why it needs to be said out loud. Non-interactive
+    # runs warn and continue so CI is unaffected.
+    target = tmp_path / "instance"
+    shutil.copytree(REPO, target, ignore=IGNORE)
+    subprocess.run(["git", "init", "-q"], cwd=target, check=True)  # noqa: S607
+    remote = ["git", "remote", "add", "origin", "git@github.com:real-org/real-repo.git"]
+    subprocess.run(remote, cwd=target, check=True)  # noqa: S603
+    result = subprocess.run(  # noqa: S603
+        [
+            sys.executable,
+            str(target / "scripts/init.py"),
+            "--defaults",
+            *("--data", "owner=other-org"),
+            *("--data", "project_name=other-repo"),
+            *("--data", "description=A demo"),
+        ],
+        check=True,
+        capture_output=True,
+    )
+    output = result.stdout.decode()
+    assert "do not match the repository you are in" in output
+    assert "real-org" in output and "other-org" in output
+    # Continuing is the documented non-interactive behaviour.
+    answers = yaml.safe_load((target / ".copier-answers.yml").read_text(encoding="utf-8"))
+    assert answers["owner"] == "other-org"
+
+
+def test_init_target_creates_the_environment(tmp_path: Path) -> None:
+    # The generated repository ships no uv.lock, and `make check` opens with
+    # `uv lock --locked`. Without this the very first push of a new repository
+    # fails CI, which is the worst possible first impression.
+    makefile = (REPO / "Makefile").read_text(encoding="utf-8")
+    init_block = makefile.split("# --- init")[1].split("# --- end init ---")[0]
+    assert "install" in init_block, "make init does not create the environment"
+    assert "activate" in init_block.lower(), "make init does not say how to activate it"
+
+
 def test_init_defaults_to_the_git_remote(tmp_path: Path) -> None:
     # On the button path the clone knows its own repository, so owner and
     # project name default to it instead of being retyped.

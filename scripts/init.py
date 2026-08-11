@@ -116,6 +116,48 @@ def ask(name: str, question: dict[str, Any], answers: dict[str, Any], assume_def
     return reply or default
 
 
+def collect(questions: dict[str, Any], answers: dict[str, Any], assume_defaults: bool) -> None:
+    """Fill `answers` from the questionnaire, in declaration order."""
+    for name, question in questions.items():
+        if not applies(question, answers):
+            # copier records nothing for a question it never asks, so an answer
+            # supplied through --data must not survive either; otherwise the two
+            # entry points disagree on the answers file and `copier update`
+            # inherits a key copier does not know about.
+            answers.pop(name, None)
+            continue
+        if name in answers:
+            continue
+        answers[name] = ask(name, question, answers, assume_defaults)
+
+
+def confirm_remote_match(answers: dict[str, Any], remote: tuple[str, str] | None, assume_defaults: bool) -> bool:
+    """Warn when the answers describe a different repository than the remote.
+
+    Nothing breaks when they disagree, which is the problem: the owner and name
+    are written into pyproject.toml, the README and every documentation URL, so
+    a mismatch silently points the whole repository at somewhere it does not
+    live. Non-interactive runs warn and continue, so CI is unaffected.
+    """
+    if remote is None:
+        return True
+    mismatched = [
+        (key, answers.get(key), actual)
+        for key, actual in (("owner", remote[0]), ("project_name", remote[1]))
+        if answers.get(key) != actual
+    ]
+    if not mismatched:
+        return True
+    print("\nwarning: these answers do not match the repository you are in:")
+    for key, answered, actual in mismatched:
+        print(f"  {key}: you answered '{answered}', but the git remote says '{actual}'")
+    print("  Metadata and documentation URLs will point at the answered values.")
+    if assume_defaults:
+        print("  Continuing anyway (non-interactive).")
+        return True
+    return input("Continue with the answered values? [y/N]: ").strip().lower() in ("y", "yes")
+
+
 def write_answers(answers: dict[str, Any]) -> None:
     marker = (REPO / "TEMPLATE_VERSION").read_text(encoding="utf-8")
     version = re.search(r"^version: (\S+)$", marker, re.M)
@@ -159,22 +201,16 @@ def main() -> int:
         questions["owner"] = {**questions["owner"], "default": owner}
         questions["project_name"] = {**questions["project_name"], "default": name}
 
-    for name, question in questions.items():
-        if not applies(question, answers):
-            # copier records nothing for a question it never asks, so an answer
-            # supplied through --data must not survive either; otherwise the two
-            # entry points disagree on the answers file and `copier update`
-            # inherits a key copier does not know about.
-            answers.pop(name, None)
-            continue
-        if name in answers:
-            continue
-        answers[name] = ask(name, question, answers, args.defaults)
+    collect(questions, answers, args.defaults)
 
     for required in ("project_name", "owner", "description"):
         if not answers.get(required):
             print(f"error: '{required}' is required (pass --data {required}=...)")
             return 1
+
+    if not confirm_remote_match(answers, remote, args.defaults):
+        print("Aborted; nothing was changed.")
+        return 1
 
     write_answers(answers)
     prune()
