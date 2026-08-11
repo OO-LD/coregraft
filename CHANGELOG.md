@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.9.0 (2026-08-11)
+
+### Features
+
+- **template**: Fix first-run defects and guide the questionnaire
+  ([`72668b9`](https://github.com/OO-LD/coregraft/commit/72668b91f5161b559eeaffc433592baee433bc9c))
+
+
 ## v0.8.2 (2026-08-11)
 
 ### Bug Fixes
