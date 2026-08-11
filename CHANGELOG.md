@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.12.0 (2026-08-11)
+
+### Features
+
+- **ci**: Deliver template updates as a pull request or an issue
+  ([`b885247`](https://github.com/OO-LD/coregraft/commit/b885247d50d27792a9ca1cba82e0cafbce67e856))
+
+
 ## v0.11.0 (2026-08-11)
 
 

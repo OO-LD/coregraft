@@ -12,7 +12,7 @@ keywords = ["template", "github-template", "copier", "uv", "semantic-release"]
 requires-python = ">=3.10,<4.0"
 # Managed by python-semantic-release from conventional commits, together with
 # TEMPLATE_VERSION. Do not edit by hand.
-version = "0.11.0"
+version = "0.12.0"
 
 [project.urls]
 Repository = "https://github.com/OO-LD/coregraft"
