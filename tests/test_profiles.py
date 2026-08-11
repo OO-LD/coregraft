@@ -12,6 +12,8 @@ import sys
 from pathlib import Path
 
 import pytest
+import yaml
+from apply_profile import OPTOUT_FILES
 
 REPO = Path(__file__).resolve().parent.parent
 PROFILES = sorted(p.name for p in (REPO / "profiles").iterdir() if p.is_dir())
@@ -119,6 +121,40 @@ def test_optout_layers_are_pruned_by_default(tmp_path: Path, profile: str) -> No
     pyproject = (target / "pyproject.toml").read_text(encoding="utf-8")
     assert "CITATION.cff" not in pyproject
     assert "pytest-benchmark" not in pyproject
+
+
+def _asked_for(question: dict, profiles: list[str]) -> set[str]:
+    """The profiles a questionnaire entry is actually asked for.
+
+    No `when:` means every profile; a `when:` naming a profile means that one.
+    """
+    condition = question.get("when")
+    if not condition:
+        return set(profiles)
+    return {profile for profile in profiles if f"'{profile}'" in condition}
+
+
+@pytest.mark.parametrize("key", sorted(OPTOUT_FILES))
+def test_optin_question_delivers_files_in_every_profile_it_is_asked_for(key: str) -> None:
+    # The gap that let the dockerfile bug through: the pruning tests only ever
+    # asserted that opted-out files are absent, so a question offered to a
+    # profile whose overlay ships nothing for it looked perfectly healthy.
+    questionnaire = yaml.safe_load((REPO / "copier.yml").read_text(encoding="utf-8"))
+    for profile in _asked_for(questionnaire[key], PROFILES):
+        overlay = REPO / "profiles" / profile
+        assert any((overlay / name).exists() for name in OPTOUT_FILES[key]), (
+            f"{profile}: '{key}' is asked but the overlay ships none of {OPTOUT_FILES[key]}"
+        )
+
+
+def test_no_optout_path_is_stale() -> None:
+    # OPTOUT_FILES doubles as documentation of what each layer contains, so a
+    # path no profile ships is a lie even though pruning it is harmless.
+    for key, names in OPTOUT_FILES.items():
+        for name in names:
+            assert any((REPO / "profiles" / profile / name).exists() for profile in PROFILES), (
+                f"OPTOUT_FILES['{key}'] lists {name}, which no profile ships"
+            )
 
 
 def test_optin_layers_are_kept_when_selected(tmp_path: Path) -> None:

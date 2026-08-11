@@ -74,6 +74,9 @@ exclude = ["profiles"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+# Tests assert against the assembler's own tables (OPTOUT_FILES), so they must
+# import from scripts/ rather than restating them and drifting.
+pythonpath = ["scripts"]
 
 [tool.ruff]
 target-version = "py310"
