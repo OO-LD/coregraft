@@ -133,3 +133,11 @@ citation:
     type: bool
     help: Include CITATION.cff (Zenodo-ready, version-synced on release)?
     default: false
+
+update_bot:
+    type: bool
+    help: >-
+        Open template updates as pull requests via a GitHub App? Needs an App with Workflows write,
+        because the built-in token may not change files under .github/workflows. Without it, updates
+        arrive as an issue with the command to run locally
+    default: false

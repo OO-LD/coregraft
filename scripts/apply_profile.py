@@ -39,6 +39,15 @@ OPTOUT_FILES: dict[str, list[str]] = {
     "benchmarks": ["pytest.benchmark.ini", "tests/benchmarks"],
 }
 
+# Conditional blocks come in two spellings. `# >>> key` suits anything with
+# hash comments; Markdown needs `<!-- >>> key -->`, because a line starting
+# with "# " is a level-one heading there and trips every linter in the source
+# file, even though the marker never survives into a generated repository.
+OPEN = r"(?:#|<!--) >>>"
+SHUT = r"(?:#|<!--) <<<"
+ANY = r"(?:#|<!--) (?:>>>|<<<)"
+CLOSE = r"(?: -->)?"
+
 TEXT_SUFFIXES = {
     ".py",
     ".md",
@@ -95,14 +104,16 @@ def strip_markers(answers: dict[str, str]) -> None:
             continue
         if ">>>" not in text:
             continue
-        for key in re.findall(r"# >>> (\w+)", text):
+        for key in re.findall(rf"{OPEN} (\w+)", text):
             if truthy(answers.get(key, "")):
-                text = re.sub(rf"[ \t]*# (?:>>>|<<<) {key}\n", "", text)
+                text = re.sub(rf"[ \t]*{ANY} {key}{CLOSE}\n\n?", "", text)
             else:
                 # Consume one blank line before the block too, otherwise
                 # removing a trailing block leaves the file ending in a blank
                 # line and end-of-file-fixer rewrites it on the first commit.
-                text = re.sub(rf"\n?[ \t]*# >>> {key}\n.*?[ \t]*# <<< {key}\n", "\n", text, flags=re.S)
+                text = re.sub(
+                    rf"\n?[ \t]*{OPEN} {key}{CLOSE}\n.*?[ \t]*{SHUT} {key}{CLOSE}\n\n?", "\n", text, flags=re.S
+                )
         # Whatever the surgery left behind, the file ends with exactly one newline.
         path.write_text(text.rstrip("\n") + "\n", encoding="utf-8")
 
