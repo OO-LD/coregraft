@@ -231,6 +231,34 @@ def test_ci_target_names_the_current_branch(makefile: str) -> None:
     assert 'Ready to push"' in ci, f"{makefile}: ci has no fallback without a branch"
 
 
+@pytest.mark.parametrize(
+    "workflow",
+    [".github/workflows/main.yml", *(f"profiles/{p}/.github/workflows/main.yml" for p in PROFILES)],
+)
+def test_every_main_workflow_previews_the_release(workflow: str) -> None:
+    # Conventional commit types decide the version, and until this job existed
+    # nobody saw the consequence of getting one wrong until after the merge.
+    # Three copies of the same job, so they drift unless something checks.
+    spec = yaml.safe_load((REPO / workflow).read_text(encoding="utf-8"))
+    job = spec["jobs"].get("version-preview")
+    assert job is not None, f"{workflow}: no version-preview job"
+    assert job["permissions"]["pull-requests"] == "write", "cannot comment without this"
+    assert "pull_request" in job["if"] and "draft" in job["if"], "must be pull requests only, and not drafts"
+    steps = {step.get("name", ""): step for step in job["steps"]}
+    checkout = next(step for step in job["steps"] if str(step.get("uses", "")).startswith("actions/checkout"))
+    # PSR walks history and tags to compute the bump; a shallow clone yields
+    # a wrong answer rather than an error.
+    assert checkout["with"]["fetch-depth"] == 0
+    preview = steps["Compute release preview"]["run"]
+    # PSR only computes a release on the main branch, so the PR head has to be
+    # named main or the preview is always "no release".
+    assert "git checkout -B main" in preview
+    assert "semantic-release version --print" in preview
+    # The changelog stamp must not commit, tag, push or release anything.
+    for guard in ("--no-commit", "--no-tag", "--no-push", "--no-vcs-release"):
+        assert guard in preview, f"{workflow}: changelog preview missing {guard}"
+
+
 @pytest.mark.parametrize("profile", PROFILES)
 def test_instances_explain_conventional_commits(tmp_path: Path, profile: str) -> None:
     # The commit-msg hook rejects a non-conventional message, and until this
