@@ -19,6 +19,12 @@ concurrency:
 
 jobs:
   deploy-dev:
+    # Only in the template repository itself. "Use this template" copies this
+    # file, and the copy's initial commit would otherwise push coregraft's own
+    # documentation to the new repository's gh-pages branch before `make init`
+    # has had a chance to delete this workflow. A generated repository is not a
+    # template, so the flag separates the two.
+    if: github.event.repository.is_template
     runs-on: ubuntu-latest
     steps:
       - name: Check out

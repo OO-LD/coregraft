@@ -99,21 +99,85 @@ def applies(question: dict[str, Any], answers: dict[str, Any]) -> bool:
     return match is not None and str(answers.get(match.group(1))) == match.group(2)
 
 
+def choose(prompt: str, options: list[str], default: str) -> str:
+    """Pick one option from a numbered list, one per line.
+
+    Typing an exact license key from a 14-item list is a transcription test
+    nobody should have to pass, so the options are printed and selected by
+    number. The name is still accepted, and enter takes the default.
+    """
+    print(f"\n{prompt}")
+    width = len(str(len(options)))
+    for index, option in enumerate(options, 1):
+        marker = "  <- default" if option == default else ""
+        print(f"  {index:>{width}}) {option}{marker}")
+    while True:
+        reply = input(f"Choose 1-{len(options)}, or enter for '{default}': ").strip()
+        if not reply:
+            return default
+        if reply.isdigit() and 1 <= int(reply) <= len(options):
+            return options[int(reply) - 1]
+        if reply in options:
+            return reply
+        print(f"  '{reply}' is not one of them. Enter a number from 1 to {len(options)}, or the name.")
+
+
 def ask(name: str, question: dict[str, Any], answers: dict[str, Any], assume_defaults: bool) -> Any:
     default = question.get("default", "")
     if isinstance(default, str):
         default = evaluate_default(default, answers)
-    choices = question.get("choices")
     if assume_defaults:
         return default
     prompt = question.get("help", name)
-    if isinstance(choices, (list, dict)):
-        options = list(choices) if isinstance(choices, list) else list(choices.values())
-        prompt += f" [{'/'.join(str(o) for o in options)}]"
-    reply = input(f"{prompt} ({default}): ").strip()
     if question.get("type") == "bool":
-        return reply.lower() in ("y", "yes", "true", "1") if reply else bool(default)
-    return reply or default
+        return choose(prompt, ["yes", "no"], "yes" if default else "no") == "yes"
+    choices = question.get("choices")
+    if isinstance(choices, (list, dict)):
+        options = [str(c) for c in (choices if isinstance(choices, list) else choices.values())]
+        return choose(prompt, options, str(default))
+    return input(f"\n{prompt} ({default}): ").strip() or default
+
+
+def collect(questions: dict[str, Any], answers: dict[str, Any], assume_defaults: bool) -> None:
+    """Fill `answers` from the questionnaire, in declaration order."""
+    for name, question in questions.items():
+        if not applies(question, answers):
+            # copier records nothing for a question it never asks, so an answer
+            # supplied through --data must not survive either; otherwise the two
+            # entry points disagree on the answers file and `copier update`
+            # inherits a key copier does not know about.
+            answers.pop(name, None)
+            continue
+        if name in answers:
+            continue
+        answers[name] = ask(name, question, answers, assume_defaults)
+
+
+def confirm_remote_match(answers: dict[str, Any], remote: tuple[str, str] | None, assume_defaults: bool) -> bool:
+    """Warn when the answers describe a different repository than the remote.
+
+    Nothing breaks when they disagree, which is the problem: the owner and name
+    are written into pyproject.toml, the README and every documentation URL, so
+    a mismatch silently points the whole repository at somewhere it does not
+    live. Non-interactive runs warn and continue, so CI is unaffected.
+    """
+    if remote is None:
+        return True
+    mismatched = [
+        (key, answers.get(key), actual)
+        for key, actual in (("owner", remote[0]), ("project_name", remote[1]))
+        if answers.get(key) != actual
+    ]
+    if not mismatched:
+        return True
+    print("\nwarning: these answers do not match the repository you are in:")
+    for key, answered, actual in mismatched:
+        print(f"  {key}: you answered '{answered}', but the git remote says '{actual}'")
+    print("  Metadata and documentation URLs will point at the answered values.")
+    if assume_defaults:
+        print("  Continuing anyway (non-interactive).")
+        return True
+    return input("Continue with the answered values? [y/N]: ").strip().lower() in ("y", "yes")
 
 
 def write_answers(answers: dict[str, Any]) -> None:
@@ -159,22 +223,16 @@ def main() -> int:
         questions["owner"] = {**questions["owner"], "default": owner}
         questions["project_name"] = {**questions["project_name"], "default": name}
 
-    for name, question in questions.items():
-        if not applies(question, answers):
-            # copier records nothing for a question it never asks, so an answer
-            # supplied through --data must not survive either; otherwise the two
-            # entry points disagree on the answers file and `copier update`
-            # inherits a key copier does not know about.
-            answers.pop(name, None)
-            continue
-        if name in answers:
-            continue
-        answers[name] = ask(name, question, answers, args.defaults)
+    collect(questions, answers, args.defaults)
 
     for required in ("project_name", "owner", "description"):
         if not answers.get(required):
             print(f"error: '{required}' is required (pass --data {required}=...)")
             return 1
+
+    if not confirm_remote_match(answers, remote, args.defaults):
+        print("Aborted; nothing was changed.")
+        return 1
 
     write_answers(answers)
     prune()
@@ -200,4 +258,11 @@ def _commit_of() -> str:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (EOFError, KeyboardInterrupt):
+        # Ctrl-C, Ctrl-D, or piped input that ran out. Nothing has been written
+        # yet at question time, so there is nothing to clean up; a traceback
+        # would just look like a crash.
+        print("\nCancelled; nothing was changed.")
+        sys.exit(1)

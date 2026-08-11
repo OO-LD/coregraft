@@ -5,6 +5,16 @@
 .PHONY: init
 init: ## Personalise this repository (first run after "Use this template")
 	@uv run scripts/init.py
+	@# The profile's Makefile is in place by now, so this re-invocation picks up
+	@# its `install` target. Creating the environment here is not a convenience:
+	@# `make check` starts with `uv lock --locked`, so without a committed
+	@# uv.lock the very first push of a new repository fails CI.
+	@$(MAKE) --no-print-directory install
+	@# printf, not echo: echo expands the \a in the Windows path to a bell.
+	@printf '\n✅ Ready. Activate the environment with:\n'
+	@printf '     %s\n' 'source .venv/bin/activate   (macOS, Linux)'
+	@printf '     %s\n' '.venv\Scripts\activate      (Windows)'
+	@printf '   Or prefix commands with "uv run". Then review and commit.\n'
 # --- end init ---
 
 .PHONY: install
@@ -41,7 +51,14 @@ instances: ## List repositories grown from this template and their version
 
 .PHONY: ci
 ci: check test docs-test ## Run everything CI runs, before pushing
-	@echo "✅ Ready to push"
+	@# Name the branch: `make ci` is the last thing run before pushing, and a
+	@# green gate on the wrong branch is an easy mistake to make.
+	@branch=$$(git branch --show-current 2>/dev/null); \
+		if [ -n "$$branch" ]; then \
+			echo "✅ Ready to push on branch '$$branch'"; \
+		else \
+			echo "✅ Ready to push"; \
+		fi
 
 .PHONY: help
 help:

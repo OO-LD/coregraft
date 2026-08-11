@@ -17,7 +17,28 @@ concurrency:
   cancel-in-progress: false
 
 jobs:
+  # Releasing needs a GitHub App, which is a one-time repository setup. Until
+  # it exists, skip cleanly instead of failing every push on a missing app-id:
+  # a repository that has not opted into releases yet is not broken. `secrets`
+  # cannot be read in a job-level `if`, so it is surfaced as an output here.
+  check-setup:
+    runs-on: ubuntu-latest
+    outputs:
+      configured: ${{ steps.check.outputs.configured }}
+    steps:
+      - id: check
+        env:
+          HAS_APP: ${{ secrets.RELEASE_APP_ID != '' }}
+        run: |
+          echo "configured=$HAS_APP" >> "$GITHUB_OUTPUT"
+          if [ "$HAS_APP" != "true" ]; then
+            echo "No RELEASE_APP_ID secret; skipping the release. See the README's Releasing section." \
+              >> "$GITHUB_STEP_SUMMARY"
+          fi
+
   release:
+    needs: check-setup
+    if: needs.check-setup.outputs.configured == 'true'
     runs-on: ubuntu-latest
     permissions:
       contents: write   # push the release commit and tag, create the GitHub release
