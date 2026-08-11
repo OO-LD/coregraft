@@ -71,7 +71,7 @@ def test_profile_leaves_no_placeholders(tmp_path: Path, profile: str) -> None:
 def test_profile_assembles_a_complete_repository(tmp_path: Path, profile: str) -> None:
     target = tmp_path / profile
     _generate(target, profile)
-    for name in ("Makefile", "pyproject.toml", "README.md", "zensical.toml", "docs"):
+    for name in ("Makefile", "pyproject.toml", "README.md", "CONTRIBUTING.md", "zensical.toml", "docs"):
         assert (target / name).exists(), f"{profile}: missing {name}"
     for name in ("profiles", "copier.yml", "scripts/apply_profile.py"):
         assert not (target / name).exists(), f"{profile}: {name} survived"
@@ -229,6 +229,39 @@ def test_ci_target_names_the_current_branch(makefile: str) -> None:
     # A detached HEAD or a directory that is not a git repository prints
     # nothing, so the message has to survive an empty answer.
     assert 'Ready to push"' in ci, f"{makefile}: ci has no fallback without a branch"
+
+
+@pytest.mark.parametrize("profile", PROFILES)
+def test_instances_explain_conventional_commits(tmp_path: Path, profile: str) -> None:
+    # The commit-msg hook rejects a non-conventional message, and until this
+    # file shipped nothing in a generated repository said what the rules were
+    # or why they matter (the version and changelog are derived from them).
+    target = tmp_path / profile
+    _generate(target, profile)
+    contributing = (target / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    assert "Conventional Commits" in contributing
+    for kind in ("feat", "fix", "BREAKING CHANGE", "commit-msg"):
+        assert kind in contributing, f"{profile}: CONTRIBUTING does not mention {kind}"
+    assert "coregraft-example" not in contributing, "CONTRIBUTING kept the placeholder project"
+
+
+def test_benchmark_docs_are_gated_like_the_target(tmp_path: Path) -> None:
+    # R1 answered benchmarks=false, correctly had no `make bench`, and its
+    # README documented it anyway. Docs and target must share one answer.
+    off = tmp_path / "off"
+    _generate(off, "python")
+    readme_off = (off / "README.md").read_text(encoding="utf-8")
+    assert "make bench" not in readme_off, "the README documents a target this repository does not have"
+    assert "Benchmarks" not in readme_off
+    assert "bench:" not in (off / "Makefile").read_text(encoding="utf-8")
+
+    on = tmp_path / "on"
+    _generate(on, "python", "benchmarks=true")
+    readme_on = (on / "README.md").read_text(encoding="utf-8")
+    assert "make bench" in readme_on, "the benchmarks layer is on but undocumented"
+    assert "bench:" in (on / "Makefile").read_text(encoding="utf-8")
+    # The CI job must call the same name the Makefile defines.
+    assert "make bench" in (on / ".github/workflows/main.yml").read_text(encoding="utf-8")
 
 
 @pytest.mark.parametrize("profile", PROFILES)

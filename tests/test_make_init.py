@@ -36,7 +36,6 @@ def test_init_personalises_and_prunes(tmp_path: Path) -> None:
         "copier.yml",
         ".copier-answers.yml.jinja",
         "CHANGELOG.md",
-        "CONTRIBUTING.md",
         "TEMPLATE_VERSION",
         "macros.py",
         "scripts",
@@ -45,6 +44,13 @@ def test_init_personalises_and_prunes(tmp_path: Path) -> None:
         ".github/workflows/docs.yml",
     ):
         assert not (target / name).exists(), f"{name} survived init"
+
+    # CONTRIBUTING.md is the one file both the template and the profile own.
+    # The instance must get the profile's, about contributing to the project,
+    # not coregraft's, about contributing to the template.
+    contributing = (target / "CONTRIBUTING.md").read_text(encoding="utf-8")
+    assert "Conventional Commits" in contributing
+    assert "github.com/OO-LD/coregraft.git" not in contributing, "the template's own CONTRIBUTING survived"
 
     # The python profile replaced the core files and was personalised.
     pyproject = (target / "pyproject.toml").read_text(encoding="utf-8")

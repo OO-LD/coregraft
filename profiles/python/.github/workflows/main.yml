@@ -95,7 +95,7 @@ jobs:
         uses: ./.github/actions/setup-python-env
 
       - name: Run benchmarks
-        run: make benchmark
+        run: make bench
 
       - name: Track benchmarks with Bencher
         if: ${{ secrets.BENCHER_API_TOKEN != '' }}

@@ -25,17 +25,22 @@ Everything else, or `make help` for the full list:
 | `make install` | Creates the environment and installs the git hooks |
 | `make docs` | Serves the documentation locally |
 | `make build` | Builds a wheel into `dist/` |
-| `make benchmark` | Runs the performance benchmarks |
+# >>> benchmarks
+| `make bench` | Runs the performance benchmarks |
+# <<< benchmarks
 
 `make check` lints untracked files on purpose: `pre-commit run -a` skips them, which is how a new file passes locally and then fails in CI the moment it is committed.
 
 Commits follow [Conventional Commits](https://www.conventionalcommits.org/); releases, the changelog and versioned documentation are automated on merge to main. Until a release App is configured, the release workflow skips itself instead of failing.
 
+# >>> benchmarks
 ## Benchmarks
 
-`make benchmark` runs the performance benchmarks in `tests/benchmarks/`. On pull requests they also run in CI and upload their results.
+`make bench` runs the performance benchmarks in `tests/benchmarks/`. On pull requests they also run in CI and upload their results.
 
 To track them over time, create a project on [Bencher](https://bencher.dev) (free for public repositories), add a `BENCHER_API_TOKEN` secret and set `BENCHER_PROJECT` in `.github/workflows/main.yml`. Bencher then comments each pull request with a statistical comparison against the base branch. Without the secret the benchmarks still run; only the tracking step is skipped.
+
+# <<< benchmarks
 
 ---
 
