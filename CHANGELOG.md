@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.8.2 (2026-08-11)
+
+### Bug Fixes
+
+- **template**: Gate the dockerfile question to the python profile
+  ([`5f93fb8`](https://github.com/OO-LD/coregraft/commit/5f93fb82d62440e533c51b5ce92b17fbeef3b015))
+
+
 ## v0.8.1 (2026-08-10)
 
 ### Bug Fixes
