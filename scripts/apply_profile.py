@@ -119,10 +119,34 @@ def prune_optouts(answers: dict[str, str]) -> None:
                 path.unlink()
 
 
+def move_package(package_dir: Path, target: Path) -> None:
+    """Rename the placeholder package, merging when the target already exists.
+
+    On `copier copy` only the placeholder is present and a rename is enough.
+    On `copier update` both exist: copier writes the template's placeholder
+    package again while the project already has the real one, and a plain
+    rename then fails with "Directory not empty", which broke every backport.
+
+    Template files win here on purpose. copier re-applies the project's own
+    diff on top afterwards, so this step only has to produce what a fresh
+    generation would have produced.
+    """
+    if not target.exists():
+        package_dir.rename(target)
+        return
+    for item in sorted(package_dir.rglob("*")):
+        if item.is_dir():
+            continue
+        destination = target / item.relative_to(package_dir)
+        destination.parent.mkdir(parents=True, exist_ok=True)
+        item.replace(destination)  # os.replace: overwrites on POSIX and Windows
+    shutil.rmtree(package_dir)
+
+
 def personalise(answers: dict[str, str]) -> None:
     package_dir = REPO / "src" / PLACEHOLDER_PACKAGE
     if package_dir.is_dir() and answers.get("package_name"):
-        package_dir.rename(REPO / "src" / answers["package_name"])
+        move_package(package_dir, REPO / "src" / answers["package_name"])
     replacements = [
         (PLACEHOLDER_PROJECT, answers["project_name"]),
         (PLACEHOLDER_PACKAGE, answers.get("package_name", "")),
