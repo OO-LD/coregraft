@@ -79,6 +79,19 @@ def test_init_writes_pinned_answers(tmp_path: Path) -> None:
     assert answers["package_name"] == "demo_repo"
 
 
+def test_init_drops_answers_the_questionnaire_does_not_ask_for(tmp_path: Path) -> None:
+    # `dockerfile` and `package_name` are python-only. copier records nothing
+    # for a question whose `when:` is false, so init must not either, even when
+    # the value arrives through --data; otherwise the two entry points write
+    # different answer files and `copier update` inherits a phantom key.
+    target = tmp_path / "instance"
+    _init(target, "profile=schema", "dockerfile=true", "package_name=nonsense")
+    answers = yaml.safe_load((target / ".copier-answers.yml").read_text(encoding="utf-8"))
+    assert "dockerfile" not in answers
+    assert "package_name" not in answers
+    assert not (target / "Dockerfile").exists()
+
+
 def test_init_guards_copier_generated_instances(tmp_path: Path) -> None:
     # A `copier copy` instance receives scripts/init.py but no copier.yml
     # (excluded); running init there must be a harmless noop.

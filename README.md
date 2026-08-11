@@ -32,7 +32,7 @@ Profiles are overlays under `profiles/`. Adding another one later is additive an
 | Tasks | A self-documenting `Makefile`, so `make help` lists everything |
 | Quality | `pre-commit` with ruff, plus conventional commit messages enforced locally |
 | Versioning | `python-semantic-release`, so versions and the changelog follow from commit messages |
-| Docs | zensical, with versioned publishing and macros so documentation and example code share one source |
+| Docs | zensical, with versioned publishing so every release keeps its own documentation |
 | Links | Link checking on a schedule, with an ignore list for the unavoidable exceptions |
 | CI | A quality job, a test matrix and a release workflow |
 

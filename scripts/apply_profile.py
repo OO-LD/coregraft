@@ -34,9 +34,9 @@ PLACEHOLDER_DESCRIPTION = "A coregraft example project"
 OPTOUT_FILES: dict[str, list[str]] = {
     "codecov": ["codecov.yaml", ".github/workflows/validate-codecov-config.yml"],
     "citation": ["CITATION.cff"],
-    "dockerfile": ["Dockerfile", ".dockerignore"],
+    "dockerfile": ["Dockerfile"],
     "devcontainer": [".devcontainer"],
-    "benchmarks": ["pytest.benchmark.ini", "tests/benchmarks", "scripts/compare_benchmarks.py"],
+    "benchmarks": ["pytest.benchmark.ini", "tests/benchmarks"],
 }
 
 TEXT_SUFFIXES = {

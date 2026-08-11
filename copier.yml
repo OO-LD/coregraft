@@ -114,6 +114,9 @@ dockerfile:
     type: bool
     help: Include a Dockerfile?
     default: false
+    # Only the python overlay ships a Dockerfile. Without this the question was
+    # asked for every profile and answering yes on schema delivered nothing.
+    when: "{{ profile == 'python' }}"
 
 devcontainer:
     type: bool

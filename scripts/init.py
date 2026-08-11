@@ -160,7 +160,14 @@ def main() -> int:
         questions["project_name"] = {**questions["project_name"], "default": name}
 
     for name, question in questions.items():
-        if name in answers or not applies(question, answers):
+        if not applies(question, answers):
+            # copier records nothing for a question it never asks, so an answer
+            # supplied through --data must not survive either; otherwise the two
+            # entry points disagree on the answers file and `copier update`
+            # inherits a key copier does not know about.
+            answers.pop(name, None)
+            continue
+        if name in answers:
             continue
         answers[name] = ask(name, question, answers, args.defaults)
 
