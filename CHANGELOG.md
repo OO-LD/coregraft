@@ -7,6 +7,9 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.11.0 (2026-08-11)
+
+
 ## v0.10.0 (2026-08-11)
 
 
