@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.9.1 (2026-08-11)
+
+### Bug Fixes
+
+- **template**: Make the profile assembler safe to re-run on update
+  ([`0da5f96`](https://github.com/OO-LD/coregraft/commit/0da5f9643ff57455288011f92f3fc54d8058d7a1))
+
+
 ## v0.9.0 (2026-08-11)
 
 ### Features
