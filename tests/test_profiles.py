@@ -217,6 +217,20 @@ def test_template_own_workflows_only_run_in_the_template(workflow: str) -> None:
     assert guarded == set(spec["jobs"]), f"{workflow}: unguarded jobs {set(spec['jobs']) - guarded}"
 
 
+@pytest.mark.parametrize("makefile", ["Makefile", *(f"profiles/{p}/Makefile" for p in PROFILES)])
+def test_ci_target_names_the_current_branch(makefile: str) -> None:
+    # Three copies of the same target, so they drift unless something checks.
+    # `make ci` is the last thing run before pushing, and a green gate on the
+    # wrong branch is an easy mistake to make.
+    text = (REPO / makefile).read_text(encoding="utf-8")
+    ci = text.split("\nci: ")[1].split("\n.PHONY")[0]
+    assert "git branch --show-current" in ci, f"{makefile}: ci does not read the branch"
+    assert "Ready to push on branch" in ci, f"{makefile}: ci does not name the branch"
+    # A detached HEAD or a directory that is not a git repository prints
+    # nothing, so the message has to survive an empty answer.
+    assert 'Ready to push"' in ci, f"{makefile}: ci has no fallback without a branch"
+
+
 @pytest.mark.parametrize("profile", PROFILES)
 def test_readme_documents_make_ci_first(profile: str) -> None:
     # `make ci` is the one command that mirrors CI, and it was discoverable
