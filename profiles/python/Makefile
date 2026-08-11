@@ -21,8 +21,8 @@ test: ## Test the code with pytest
 	@uv run python -m pytest --cov --cov-config=pyproject.toml --cov-report=xml
 
 # >>> benchmarks
-.PHONY: benchmark
-benchmark: ## Run the performance benchmarks
+.PHONY: bench
+bench: ## Run the performance benchmarks
 	@echo "🚀 Running benchmarks: pytest-benchmark"
 	@uv run python -m pytest -c pytest.benchmark.ini \
 		--benchmark-autosave --benchmark-json=benchmark_results.json

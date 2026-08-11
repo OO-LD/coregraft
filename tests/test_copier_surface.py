@@ -15,7 +15,6 @@ TEMPLATE_ONLY = [
     "copier.yml",
     "CHANGELOG.md",
     "TEMPLATE_VERSION",
-    "CONTRIBUTING.md",
     "macros.py",
     "tests/test_template_integrity.py",
     "scripts",
