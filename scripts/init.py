@@ -99,21 +99,43 @@ def applies(question: dict[str, Any], answers: dict[str, Any]) -> bool:
     return match is not None and str(answers.get(match.group(1))) == match.group(2)
 
 
+def choose(prompt: str, options: list[str], default: str) -> str:
+    """Pick one option from a numbered list, one per line.
+
+    Typing an exact license key from a 14-item list is a transcription test
+    nobody should have to pass, so the options are printed and selected by
+    number. The name is still accepted, and enter takes the default.
+    """
+    print(f"\n{prompt}")
+    width = len(str(len(options)))
+    for index, option in enumerate(options, 1):
+        marker = "  <- default" if option == default else ""
+        print(f"  {index:>{width}}) {option}{marker}")
+    while True:
+        reply = input(f"Choose 1-{len(options)}, or enter for '{default}': ").strip()
+        if not reply:
+            return default
+        if reply.isdigit() and 1 <= int(reply) <= len(options):
+            return options[int(reply) - 1]
+        if reply in options:
+            return reply
+        print(f"  '{reply}' is not one of them. Enter a number from 1 to {len(options)}, or the name.")
+
+
 def ask(name: str, question: dict[str, Any], answers: dict[str, Any], assume_defaults: bool) -> Any:
     default = question.get("default", "")
     if isinstance(default, str):
         default = evaluate_default(default, answers)
-    choices = question.get("choices")
     if assume_defaults:
         return default
     prompt = question.get("help", name)
-    if isinstance(choices, (list, dict)):
-        options = list(choices) if isinstance(choices, list) else list(choices.values())
-        prompt += f" [{'/'.join(str(o) for o in options)}]"
-    reply = input(f"{prompt} ({default}): ").strip()
     if question.get("type") == "bool":
-        return reply.lower() in ("y", "yes", "true", "1") if reply else bool(default)
-    return reply or default
+        return choose(prompt, ["yes", "no"], "yes" if default else "no") == "yes"
+    choices = question.get("choices")
+    if isinstance(choices, (list, dict)):
+        options = [str(c) for c in (choices if isinstance(choices, list) else choices.values())]
+        return choose(prompt, options, str(default))
+    return input(f"\n{prompt} ({default}): ").strip() or default
 
 
 def collect(questions: dict[str, Any], answers: dict[str, Any], assume_defaults: bool) -> None:
@@ -236,4 +258,11 @@ def _commit_of() -> str:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    try:
+        sys.exit(main())
+    except (EOFError, KeyboardInterrupt):
+        # Ctrl-C, Ctrl-D, or piped input that ran out. Nothing has been written
+        # yet at question time, so there is nothing to clean up; a traceback
+        # would just look like a crash.
+        print("\nCancelled; nothing was changed.")
+        sys.exit(1)

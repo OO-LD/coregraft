@@ -9,6 +9,8 @@ import subprocess
 import sys
 from pathlib import Path
 
+import init
+import pytest
 import yaml
 
 REPO = Path(__file__).resolve().parent.parent
@@ -106,6 +108,48 @@ def test_init_guards_copier_generated_instances(tmp_path: Path) -> None:
     assert b"Already initialised" in result.stdout
     assert (target / "Makefile").exists()
     assert (target / "scripts/init.py").exists()
+
+
+def _replies(monkeypatch: pytest.MonkeyPatch, *values: str) -> None:
+    answers = iter(values)
+    monkeypatch.setattr("builtins.input", lambda _: next(answers))
+
+
+def test_choose_accepts_a_number(monkeypatch: pytest.MonkeyPatch) -> None:
+    # The license list has 14 entries; typing the exact key is a transcription
+    # test nobody should have to pass.
+    _replies(monkeypatch, "3")
+    assert init.choose("License", ["mit", "apache-2.0", "gpl-3.0", "none"], "none") == "gpl-3.0"
+
+
+def test_choose_still_accepts_the_name(monkeypatch: pytest.MonkeyPatch) -> None:
+    _replies(monkeypatch, "apache-2.0")
+    assert init.choose("License", ["mit", "apache-2.0", "none"], "none") == "apache-2.0"
+
+
+def test_choose_takes_the_default_on_enter(monkeypatch: pytest.MonkeyPatch) -> None:
+    _replies(monkeypatch, "")
+    assert init.choose("License", ["mit", "none"], "none") == "none"
+
+
+def test_choose_rejects_bad_input_and_asks_again(monkeypatch: pytest.MonkeyPatch) -> None:
+    _replies(monkeypatch, "99", "nonsense", "1")
+    assert init.choose("Profile", ["python", "schema"], "python") == "python"
+
+
+@pytest.mark.parametrize(("reply", "expected"), [("1", True), ("2", False), ("", False)])
+def test_booleans_are_a_choice_not_free_text(monkeypatch: pytest.MonkeyPatch, reply: str, expected: bool) -> None:
+    # Previously these were typed as y/yes/true/1, which is three ways to be
+    # wrong. Now they are the same numbered list as everything else.
+    _replies(monkeypatch, reply)
+    question = {"type": "bool", "default": False, "help": "Include a Dockerfile?"}
+    assert init.ask("dockerfile", question, {}, assume_defaults=False) is expected
+
+
+def test_free_text_questions_stay_free_text(monkeypatch: pytest.MonkeyPatch) -> None:
+    _replies(monkeypatch, "my-project")
+    question = {"type": "str", "help": "Repository name"}
+    assert init.ask("project_name", question, {}, assume_defaults=False) == "my-project"
 
 
 def test_init_warns_when_the_answers_contradict_the_remote(tmp_path: Path) -> None:
