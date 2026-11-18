@@ -31,6 +31,12 @@ check: ## Run code quality tools
 	@uv run pre-commit run --files $$(git ls-files --cached --others --exclude-standard)
 	@echo "🚀 Static type checking: Running ty"
 	@uv run ty check
+	@echo "🚀 Checking Markdown extensions: Running check-extensions"
+	@$(MAKE) --no-print-directory check-extensions
+
+.PHONY: check-extensions
+check-extensions: ## Check zensical.toml still restates Zensical's default Markdown extensions
+	@uv run python scripts/check_markdown_extensions.py
 
 .PHONY: test
 test: ## Run the template integrity tests

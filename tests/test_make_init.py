@@ -38,12 +38,13 @@ def test_init_personalises_and_prunes(tmp_path: Path) -> None:
         "CHANGELOG.md",
         "TEMPLATE_VERSION",
         "macros.py",
-        "scripts",
         "profiles",
         "uv.lock",
         ".github/workflows/docs.yml",
     ):
         assert not (target / name).exists(), f"{name} survived init"
+    # Of the template scripts only the extensions guard is shared with instances.
+    assert [p.name for p in (target / "scripts").glob("*.py")] == ["check_markdown_extensions.py"]
 
     # CONTRIBUTING.md is the one file both the template and the profile own.
     # The instance must get the profile's, about contributing to the project,

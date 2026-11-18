@@ -17,7 +17,6 @@ TEMPLATE_ONLY = [
     "TEMPLATE_VERSION",
     "macros.py",
     "tests/test_template_integrity.py",
-    "scripts",
     "profiles",
     ".github/workflows/docs.yml",
 ]
@@ -51,6 +50,9 @@ def test_generation_excludes_template_only_files(tmp_path: Path) -> None:
     _generate(tmp_path)
     for name in TEMPLATE_ONLY:
         assert not (tmp_path / name).exists(), f"{name} leaked into the instance"
+    # Of the template scripts only the extensions guard is shared with instances.
+    shipped = [p.name for p in (tmp_path / "scripts").glob("*.py")]
+    assert shipped == ["check_markdown_extensions.py"], shipped
     # The core CI workflows reach the instance; the profile replaced main.yml
     # and contributed the instance release workflow (post-copy task).
     assert (tmp_path / ".github/workflows/linkcheck.yml").exists()
