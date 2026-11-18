@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.14.0 (2026-11-18)
+
+### Features
+
+- **docs**: Guard zensical markdown extensions against default drift
+  ([`103c984`](https://github.com/OO-LD/coregraft/commit/103c9844d25c25f6558056619c06ac9cdc24b470))
+
+
 ## v0.13.0 (2026-11-18)
 
 ### Features
