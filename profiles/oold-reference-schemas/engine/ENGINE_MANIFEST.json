@@ -1,0 +1,29 @@
+{
+  "source": "https://github.com/OO-LD/oold-reference-schemas.git",
+  "tag": null,
+  "commit": "d1371b683d85492eaa82791d7ec45389bba83d77",
+  "files": {
+    "_shared.py": "4e798679906a3d441219fb4e64c4a2ed7b4c48c241617b5b23d06bc1eedc404d",
+    "build_docs.py": "3b96cc4832c24aa7b719d0efefde8b48a0d21bb6ce93fe0b85dac30541f877af",
+    "build_mappings.py": "fcdd66e4e878b91fb16a3c909a3576d47178796d561ef213bbb9567b0d4110d4",
+    "build_pages.py": "2e7e025a2f862a696d741d4bf390021687410f2b3be500221f0dd159aaf5a1b9",
+    "bump.py": "5362f95e2788154a8cb50ef18d8c9921e8ff0b168c78964e74843fc78824d5a4",
+    "check_enums.py": "3d10e4981e20ad1834af0af32f130c0dde6b98d7a21ff7fcbe1e257d1b2af841",
+    "check_identifiers.py": "c65c58428bae41e8ee4bc162f499129a6a801c6c4fb5c5df9a96b70bf4c5d740",
+    "check_package.py": "d08efcb5cbb13891706dd03954bf44d27554a47281d63278600b4d28173ece4f",
+    "check_publish.py": "7f6deff9f853664a2f04b98e3b2dca87a016b29bdd1287aa62962b2b07b0a9d7",
+    "config.py": "23ed9cc0cc5e2df775473072a4c7bcdb396a11c62b7c9a78e6fe1788b6400202",
+    "effective_views.py": "c5f55006eb58e43d8b9d53a5dbb2427060e92418c99eb2aa659ce26621ffaae9",
+    "extract_labels.py": "170f0f0e8a57825ca70f06eeef95a9c015889913a82ba9860c8599e007a77a71",
+    "fetch_ontologies.py": "cee58a213d06263abc35f6be7804a986e15476d3e6962c45d660595cf195e3a1",
+    "level.py": "17b58178c892849e0f1d32e2dba6744a68a3f143048be3f93d8c88de20324bb7",
+    "lock.py": "140fdf69550ad69fbbadd20c6fc7f6d0f7694a660f6434ec07ea871a00a0cae7",
+    "macros.py": "7fbde94b93d39044368c6592c1f343bf9f0d93fbeb08cdb5a9771f69585a2360",
+    "package.py": "8cc0c7f163bc03f8f5e7d2b197fb0af41485184f05b437e7cd35b0951ab3f548",
+    "pins.py": "9f171617b0c4baae5d3b4108c292f0e0b2433b8a41f7251ec94acee44d0d5c70",
+    "publish.py": "d889ef8a97889e9aa0b3e2f531b68cc0683be1ed426b53eb900683c90fc429b3",
+    "release.py": "65a91e92311d9e7fc24e4eaf1dbfe1d82626c41530b022202c7721b7bf1a66dd",
+    "remote.py": "730be166c163c7430e90ae2391f5aa2735a4c4e5736d054511222b238340eee5",
+    "spec_edition.py": "1bb7a269b053e93bdb6b2d84fd81bae2f302f10858a83546eff8342c4da2aa73"
+  }
+}

@@ -3,6 +3,10 @@ minimum_pre_commit_version: 3.2.0
 # `pre-commit install` (no --hook-type flags needed).
 default_install_hook_types: [pre-commit, commit-msg]
 
+# The route's engine snapshot is byte-for-byte what the core published (see its
+# ENGINE_MANIFEST.json), so no hook may rewrite it.
+exclude: ^profiles/oold-reference-schemas/engine/
+
 repos:
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v6.0.0

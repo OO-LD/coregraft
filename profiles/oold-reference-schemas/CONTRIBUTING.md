@@ -6,7 +6,7 @@
 make install
 ```
 
-Installs the environment and the git hooks. Run it once after cloning.
+Installs the environment and the git hooks. Run it once after cloning. The engine needs Python 3.11 or newer.
 
 ## Before you push
 
@@ -15,6 +15,8 @@ make ci
 ```
 
 Runs `check`, `test` and `docs-test` in the order CI does, so a green run here means a green run there. See the [README](README.md) for the individual targets.
+
+The schema versions follow the changes: `make bump` raises each version to what the diff since the last release requires, and `make bump-check` fails if the commits you wrote imply less. Do not edit `engine/`; it is a snapshot owned by the template.
 
 ## Commit messages
 

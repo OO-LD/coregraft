@@ -13,6 +13,7 @@ from pathlib import Path
 
 import check_markdown_extensions
 import pytest
+import sync_engine
 import yaml
 from apply_profile import OPTOUT_FILES
 
@@ -102,6 +103,17 @@ def test_reference_schemas_route_ships_a_module_and_its_identity(tmp_path: Path)
         assert not (target / name).exists(), f"{name} leaked from the schema route"
     # The docs point at the core they build on.
     assert "schemas.oo-ld.org" in (target / "docs/index.md").read_text(encoding="utf-8")
+    # The engine snapshot ships whole, its manifest agrees with it, and no hook may rewrite it.
+    assert sync_engine.check(target / "engine") == []
+    assert (target / "engine/lock.py").exists()
+    assert "exclude: ^engine/" in (target / ".pre-commit-config.yaml").read_text(encoding="utf-8")
+    assert 'requires-python = ">=3.11' in (target / "pyproject.toml").read_text(encoding="utf-8")
+    assert (target / "docs/packages/.gitignore").exists()
+
+
+def test_the_committed_engine_snapshot_matches_its_manifest() -> None:
+    # Catches a hand edit of the snapshot: it may only change by a sync.
+    assert sync_engine.check(sync_engine.DEST) == []
 
 
 def test_schema_profile_ships_validation_and_spec(tmp_path: Path) -> None:

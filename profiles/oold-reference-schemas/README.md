@@ -5,6 +5,10 @@ A coregraft example project
 Reference schemas that build on the [OO-LD reference schemas](https://schemas.oo-ld.org/). The schemas live in
 `modules/<name>/`, the identity in `reference-schemas.toml`.
 
+## The engine
+
+`engine/` is a snapshot of the engine of the [OO-LD reference schemas](https://github.com/OO-LD/oold-reference-schemas), with `engine/ENGINE_MANIFEST.json` recording the tag and commit it came from. It belongs to the template: run it through `make`, never edit it. A template update replaces it as a whole. It needs Python 3.11 or newer.
+
 ## Development
 
 One command mirrors CI. Run it before every push:
@@ -17,8 +21,8 @@ It runs these in order, and each is also usable on its own:
 
 | Command | Does |
 | --- | --- |
-| `make check` | Checks the Markdown extensions and lints |
-| `make test` | Runs the tests (nothing yet: the engine arrives with a later snapshot) |
+| `make check` | Lints, and checks the locks, versions, pinned specification edition and enums |
+| `make test` | Validates the modules and their example instances |
 | `make docs-test` | Builds the documentation strictly, failing on any warning |
 
 Everything else, or `make help` for the full list:
@@ -26,6 +30,11 @@ Everything else, or `make help` for the full list:
 | Command | Does |
 | --- | --- |
 | `make install` | Installs the environment and the git hooks |
+| `make lock` | Resolves and writes the lock of every module |
+| `make package` | Builds the offline package of every module into `docs/packages/` (not committed) |
+| `make bump` | Raises the schema versions the changes since the last release require |
+| `make bump-check` | Fails if the commits imply a smaller version than the schemas need |
+| `make check-identifiers` | After a release, checks every identifier resolves |
 | `make check-extensions` | Checks `zensical.toml` against Zensical's defaults |
 | `make docs` | Serves the documentation locally |
 
