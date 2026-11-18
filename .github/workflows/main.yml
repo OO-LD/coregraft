@@ -133,7 +133,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        profile: [python, schema]
+        profile: [python, schema, oold-reference-schemas]
       fail-fast: false
     steps:
       - name: Check out

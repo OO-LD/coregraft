@@ -53,6 +53,7 @@ profile:
     choices:
         python: python
         schema: schema
+        oold-reference-schemas: oold-reference-schemas
     default: python
 
 project_name:

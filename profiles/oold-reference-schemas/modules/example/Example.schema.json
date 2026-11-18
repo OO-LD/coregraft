@@ -1,0 +1,15 @@
+{
+  "$schema": "https://oo-ld.org/1.0.1/meta/oold-meta-schema.json",
+  "$id": "Example.schema.json",
+  "x-oold-version": "0.1.0",
+  "title": "Example",
+  "description": "A placeholder schema; replace it with your own.",
+  "type": "object",
+  "properties": {
+    "label": {
+      "type": "string",
+      "description": "A human readable name."
+    }
+  },
+  "required": ["label"]
+}

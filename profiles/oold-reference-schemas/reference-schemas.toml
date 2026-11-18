@@ -1,0 +1,12 @@
+# The identity of this collection of reference schemas. The engine reads it and carries no
+# identity of its own. Same format as OO-LD/oold-reference-schemas.
+
+[project]
+title = "coregraft-example"
+repository = "https://github.com/coregraft-owner/coregraft-example"
+
+[namespace]
+# what schemas cite: permanent. Point it at an address you control before the first release
+iri = "https://coregraft-owner.github.io/coregraft-example"
+# where the files, packages and documentation are served
+host = "https://coregraft-owner.github.io/coregraft-example"
