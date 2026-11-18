@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.15.0 (2026-11-18)
+
+### Features
+
+- **profile**: Add the oold-reference-schemas route skeleton
+  ([`51fa75d`](https://github.com/OO-LD/coregraft/commit/51fa75d85e986c3df63120b9f00921de65570635))
+
+
 ## v0.14.0 (2026-11-18)
 
 ### Features
