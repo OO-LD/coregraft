@@ -179,7 +179,11 @@ def test_optin_layers_are_kept_when_selected(tmp_path: Path) -> None:
     # the repository has a BENCHER_API_TOKEN.
     workflow = (target / ".github/workflows/main.yml").read_text(encoding="utf-8")
     assert "bencherdev/bencher" in workflow
-    assert "secrets.BENCHER_API_TOKEN != ''" in workflow
+    # The `secrets` context is invalid in a step `if`, so the gate reads env.
+    assert "if: env.BENCHER_API_TOKEN != ''" in workflow
+    assert "if: ${{ secrets." not in workflow
+    # Benchmarks run in their own session, never with the unit tests.
+    assert "--ignore=tests/benchmarks" in pyproject
     # Marker comments must not survive into the instance.
     assert "# >>> citation" not in pyproject
     assert "# <<< benchmarks" not in (target / "Makefile").read_text(encoding="utf-8")

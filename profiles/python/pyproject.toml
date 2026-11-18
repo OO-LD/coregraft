@@ -64,7 +64,7 @@ changelog_file = "CHANGELOG.md"
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
-addopts = "--cov --cov-config=pyproject.toml --cov-report=term-missing"
+addopts = "--cov --cov-config=pyproject.toml --cov-report=term-missing --ignore=tests/benchmarks"
 
 [tool.coverage.run]
 branch = true
