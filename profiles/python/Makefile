@@ -4,6 +4,10 @@ install: ## Install the virtual environment and the pre-commit hooks
 	@uv sync
 	@uv run pre-commit install
 
+.PHONY: check-extensions
+check-extensions: ## Check zensical.toml still restates Zensical's default Markdown extensions
+	@uv run python scripts/check_markdown_extensions.py
+
 .PHONY: check
 check: ## Run code quality tools
 	@echo "🚀 Checking lock file consistency with 'pyproject.toml'"
@@ -12,6 +16,8 @@ check: ## Run code quality tools
 	@uv run pre-commit run --files $$(git ls-files --cached --others --exclude-standard)
 	@echo "🚀 Static type checking: Running ty"
 	@uv run ty check
+	@echo "🚀 Checking Markdown extensions: Running check-extensions"
+	@$(MAKE) --no-print-directory check-extensions
 	@echo "🚀 Checking for obsolete dependencies: Running deptry"
 	@uv run deptry src
 

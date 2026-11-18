@@ -24,8 +24,12 @@ stage-schemas: ## Copy schemas/ into docs/ so every version serves them
 	@mkdir -p docs/schemas
 	@cp schemas/*.json docs/schemas/
 
+.PHONY: check-extensions
+check-extensions: ## Check zensical.toml still restates Zensical's default Markdown extensions
+	@uv run python scripts/check_markdown_extensions.py
+
 .PHONY: check
-check: validate spec stage-schemas ## Run all quality checks
+check: validate spec stage-schemas check-extensions ## Run all quality checks
 	@echo "🚀 Linting: Running pre-commit"
 	@uv run pre-commit run --files $$(git ls-files --cached --others --exclude-standard)
 	@echo "🚀 Checking the rendered spec is up to date"

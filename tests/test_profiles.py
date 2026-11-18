@@ -11,6 +11,7 @@ import subprocess
 import sys
 from pathlib import Path
 
+import check_markdown_extensions
 import pytest
 import yaml
 from apply_profile import OPTOUT_FILES
@@ -77,6 +78,11 @@ def test_profile_assembles_a_complete_repository(tmp_path: Path, profile: str) -
         assert not (target / name).exists(), f"{profile}: {name} survived"
     # The update workflow ships to instances; the registry script does not.
     assert not (target / "scripts/track_instances.py").exists()
+    # The Markdown extensions guard ships, and the generated config passes it.
+    guard = target / "scripts/check_markdown_extensions.py"
+    assert guard.exists(), f"{profile}: the extensions guard is missing"
+    assert "check-extensions" in (target / "Makefile").read_text(encoding="utf-8")
+    assert check_markdown_extensions.main([str(target / "zensical.toml")]) == 0
     assert not (target / "scripts/sync_engine.py").exists()
     for workflow in ("main.yml", "on-release-main.yml", "linkcheck.yml", "template-update.yml"):
         assert (target / ".github/workflows" / workflow).exists(), f"{profile}: missing {workflow}"
