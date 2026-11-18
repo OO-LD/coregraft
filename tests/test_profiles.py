@@ -77,6 +77,7 @@ def test_profile_assembles_a_complete_repository(tmp_path: Path, profile: str) -
         assert not (target / name).exists(), f"{profile}: {name} survived"
     # The update workflow ships to instances; the registry script does not.
     assert not (target / "scripts/track_instances.py").exists()
+    assert not (target / "scripts/sync_engine.py").exists()
     for workflow in ("main.yml", "on-release-main.yml", "linkcheck.yml", "template-update.yml"):
         assert (target / ".github/workflows" / workflow).exists(), f"{profile}: missing {workflow}"
 

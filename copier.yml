@@ -40,6 +40,7 @@ _exclude:
     - "/scripts/init.py"
     # template maintenance tooling, not instance content
     - "/scripts/track_instances.py"
+    - "/scripts/sync_engine.py"
 
 # Post-copy: apply the profile overlay and personalise (the same module the
 # button path runs through `make init`). Requires `copier copy --trust`.
