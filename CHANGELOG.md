@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.12.1 (2026-11-18)
+
+### Bug Fixes
+
+- **python**: Gate Bencher on env and keep benchmarks out of the unit session
+  ([`c8e6612`](https://github.com/OO-LD/coregraft/commit/c8e6612027312b4026d3812d60866ec3bc8c1e2a))
+
+
 ## v0.12.0 (2026-08-11)
 
 ### Features
