@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.13.0 (2026-11-18)
+
+### Features
+
+- **scripts**: Sync a tagged engine snapshot into a route overlay
+  ([`e1579b2`](https://github.com/OO-LD/coregraft/commit/e1579b29268ca821c236c25745c1bb0c75ff118f))
+
+
 ## v0.12.1 (2026-11-18)
 
 ### Bug Fixes
