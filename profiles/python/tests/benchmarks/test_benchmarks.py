@@ -1,4 +1,4 @@
-"""Performance benchmarks; run with `make benchmark`, never with the unit tests."""
+"""Performance benchmarks; run with `make bench`, never with the unit tests."""
 
 from coregraft_example import hello
 
