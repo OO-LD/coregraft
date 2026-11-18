@@ -88,6 +88,22 @@ def test_profile_assembles_a_complete_repository(tmp_path: Path, profile: str) -
         assert (target / ".github/workflows" / workflow).exists(), f"{profile}: missing {workflow}"
 
 
+def test_reference_schemas_route_ships_a_module_and_its_identity(tmp_path: Path) -> None:
+    target = tmp_path / "route"
+    _generate(target, "oold-reference-schemas")
+    assert (target / "modules/example/module.json").exists()
+    assert (target / "modules/example/Example.schema.json").exists()
+    # The identity is the instance's, never the placeholder's.
+    identity = (target / "reference-schemas.toml").read_text(encoding="utf-8")
+    assert 'repository = "https://github.com/demo-org/demo-repo"' in identity
+    assert "coregraft-" not in identity
+    # No ajv or ReSpec: those belong to the schema route.
+    for name in ("package.json", "scripts/validate.mjs", "spec", "docs/spec"):
+        assert not (target / name).exists(), f"{name} leaked from the schema route"
+    # The docs point at the core they build on.
+    assert "schemas.oo-ld.org" in (target / "docs/index.md").read_text(encoding="utf-8")
+
+
 def test_schema_profile_ships_validation_and_spec(tmp_path: Path) -> None:
     target = tmp_path / "schema"
     _generate(target, "schema")
