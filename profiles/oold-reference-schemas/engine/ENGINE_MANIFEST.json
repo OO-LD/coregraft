@@ -1,7 +1,7 @@
 {
   "source": "https://github.com/OO-LD/oold-reference-schemas.git",
   "tag": null,
-  "commit": "d1371b683d85492eaa82791d7ec45389bba83d77",
+  "commit": "e480a0900ac13e032fe2f648d6450aab009438d5",
   "files": {
     "_shared.py": "4e798679906a3d441219fb4e64c4a2ed7b4c48c241617b5b23d06bc1eedc404d",
     "build_docs.py": "3b96cc4832c24aa7b719d0efefde8b48a0d21bb6ce93fe0b85dac30541f877af",
@@ -12,6 +12,7 @@
     "check_identifiers.py": "c65c58428bae41e8ee4bc162f499129a6a801c6c4fb5c5df9a96b70bf4c5d740",
     "check_package.py": "d08efcb5cbb13891706dd03954bf44d27554a47281d63278600b4d28173ece4f",
     "check_publish.py": "7f6deff9f853664a2f04b98e3b2dca87a016b29bdd1287aa62962b2b07b0a9d7",
+    "components.py": "815db539c45a639b35884cba2bfe4d1ac853bf01864000eb040f85755089b955",
     "config.py": "23ed9cc0cc5e2df775473072a4c7bcdb396a11c62b7c9a78e6fe1788b6400202",
     "effective_views.py": "c5f55006eb58e43d8b9d53a5dbb2427060e92418c99eb2aa659ce26621ffaae9",
     "extract_labels.py": "170f0f0e8a57825ca70f06eeef95a9c015889913a82ba9860c8599e007a77a71",
