@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.17.0 (2026-11-20)
+
+### Features
+
+- **scripts**: Sync the offline validation recipe with the engine
+  ([`155a9be`](https://github.com/OO-LD/coregraft/commit/155a9be550e3cbc49aaf4a75cc7781a2c579075d))
+
+
 ## v0.16.0 (2026-11-20)
 
 ### Features
