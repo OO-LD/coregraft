@@ -19,6 +19,9 @@ def source(tmp_path: Path) -> Path:
     (repo / "scripts" / "a.py").write_text("A = 1\n")
     (repo / "scripts" / "b.py").write_text("B = 1\n")
     (repo / "README.md").write_text("not engine\n")
+    (repo / "examples" / "versioning").mkdir(parents=True)
+    (repo / "examples" / "versioning" / "validate_offline.py").write_text("V = 1\n")
+    (repo / "examples" / "versioning" / "other.py").write_text("OTHER = 1\n")
     _git(repo, "init", "--quiet")
     _git(repo, "add", ".")
     _git(repo, "-c", "user.name=t", "-c", "user.email=t@t", "commit", "--quiet", "-m", "one")
@@ -33,7 +36,7 @@ def test_snapshot_records_tag_and_commit(source: Path, tmp_path: Path) -> None:
     assert manifest["tag"] == "v1"
     assert manifest["source"] == "https://example.org/engine.git"
     assert len(manifest["commit"]) == 40
-    assert sorted(p.name for p in dest.iterdir()) == ["ENGINE_MANIFEST.json", "a.py", "b.py"]
+    assert sorted(p.name for p in dest.iterdir()) == ["ENGINE_MANIFEST.json", "a.py", "b.py", "validate_offline.py"]
     assert json.loads((dest / "ENGINE_MANIFEST.json").read_text()) == manifest
     assert sync_engine.check(dest) == []
 

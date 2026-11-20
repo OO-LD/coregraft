@@ -22,7 +22,7 @@ It runs these in order, and each is also usable on its own:
 | Command | Does |
 | --- | --- |
 | `make check` | Lints, and checks the locks, versions, pinned specification edition and enums |
-| `make test` | Validates the modules and their example instances |
+| `make test` | Validates the modules, their example instances and the package |
 | `make docs-test` | Builds the documentation strictly, failing on any warning |
 
 Everything else, or `make help` for the full list:

@@ -24,6 +24,7 @@
     "publish.py": "d889ef8a97889e9aa0b3e2f531b68cc0683be1ed426b53eb900683c90fc429b3",
     "release.py": "65a91e92311d9e7fc24e4eaf1dbfe1d82626c41530b022202c7721b7bf1a66dd",
     "remote.py": "730be166c163c7430e90ae2391f5aa2735a4c4e5736d054511222b238340eee5",
-    "spec_edition.py": "1bb7a269b053e93bdb6b2d84fd81bae2f302f10858a83546eff8342c4da2aa73"
+    "spec_edition.py": "1bb7a269b053e93bdb6b2d84fd81bae2f302f10858a83546eff8342c4da2aa73",
+    "validate_offline.py": "14abcf332d3954295c6e5516d678dfd19a3f2796a14cb4f828b82a8d6f69f63d"
   }
 }

@@ -1,6 +1,6 @@
 """Copy a tagged snapshot of the reference schemas engine into a route overlay.
 
-The engine source of truth is OO-LD/oold-reference-schemas (`scripts/*.py`). A route
+The engine source of truth is OO-LD/oold-reference-schemas (`scripts/*.py` and one recipe). A route
 carries a snapshot of it, and a manifest that says which tag and commit it came from.
 
     uv run scripts/sync_engine.py --source ../oold-reference-schemas --ref v2026.09.01
@@ -28,9 +28,12 @@ from pathlib import Path
 REPO = Path(__file__).resolve().parent.parent
 DEST = REPO / "profiles" / "oold-reference-schemas" / "engine"
 MANIFEST = "ENGINE_MANIFEST.json"
-# What counts as the engine in the source repository.
+# What counts as the engine in the source repository: scripts/*.py, plus the standalone
+# recipe that check_package.py imports. Python finds it next to the script, so it is
+# copied flat.
 ENGINE_DIR = "scripts"
 ENGINE_SUFFIX = ".py"
+ENGINE_EXTRA = ("examples/versioning/validate_offline.py",)
 
 
 def git(repo: Path, *args: str) -> bytes:
@@ -54,12 +57,13 @@ def resolve(repo: Path, ref: str, allow_untagged: bool) -> tuple[str | None, str
 
 def engine_files(repo: Path, commit: str) -> dict[str, bytes]:
     """The engine files at `commit`, read from git so the working tree never leaks in."""
-    raw = git(repo, "archive", "--format=tar", commit, ENGINE_DIR)
+    raw = git(repo, "archive", "--format=tar", commit, ENGINE_DIR, *ENGINE_EXTRA)
     files: dict[str, bytes] = {}
     with tarfile.open(fileobj=io.BytesIO(raw)) as tar:
         for member in tar:
             path = Path(member.name)
-            if member.isfile() and path.parent == Path(ENGINE_DIR) and path.suffix == ENGINE_SUFFIX:
+            wanted = (path.parent == Path(ENGINE_DIR) and path.suffix == ENGINE_SUFFIX) or member.name in ENGINE_EXTRA
+            if member.isfile() and wanted:
                 handle = tar.extractfile(member)
                 if handle is not None:
                     files[path.name] = handle.read()
