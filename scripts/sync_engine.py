@@ -26,7 +26,7 @@ import tempfile
 from pathlib import Path
 
 REPO = Path(__file__).resolve().parent.parent
-DEST = REPO / "profiles" / "oold-reference-schemas" / "scripts"
+DEST = REPO / "profiles" / "oold-reference-schemas" / "engine"
 MANIFEST = "ENGINE_MANIFEST.json"
 # What counts as the engine in the source repository.
 ENGINE_DIR = "scripts"

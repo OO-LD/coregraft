@@ -1,0 +1,6 @@
+{
+  "$schema": "Example.schema.json",
+  "@context": "Example.schema.json",
+  "@id": "https://example.org/example-1",
+  "label": "An example"
+}

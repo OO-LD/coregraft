@@ -82,6 +82,8 @@ pythonpath = ["scripts"]
 target-version = "py310"
 line-length = 120
 fix = true
+# The route's engine snapshot belongs to the core and is never reformatted here.
+extend-exclude = ["profiles/oold-reference-schemas/engine"]
 
 [tool.ruff.lint]
 select = [

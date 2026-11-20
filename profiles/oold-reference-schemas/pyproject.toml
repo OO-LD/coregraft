@@ -4,7 +4,8 @@
 name = "coregraft-example"
 description = "A coregraft example project"
 version = "0.1.0"
-requires-python = ">=3.10,<4.0"
+# The engine reads TOML with tomllib, which needs 3.11.
+requires-python = ">=3.11,<4.0"
 
 [tool.uv]
 package = false
@@ -40,9 +41,11 @@ changelog_file = "CHANGELOG.md"
 # Applies to the tooling scripts (scripts/*.py); keep in step with the other
 # profiles so a script moved between repositories formats identically.
 [tool.ruff]
-target-version = "py310"
+target-version = "py311"
 line-length = 120
 fix = true
+# The engine is a snapshot owned by the route: never reformatted here.
+extend-exclude = ["engine"]
 
 [tool.ruff.lint]
 select = [

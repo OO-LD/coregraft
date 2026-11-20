@@ -1,8 +1,47 @@
+# The validator and the specification these schemas conform to are one release. Pinned so a
+# local run and CI judge the same way.
+OOLD_PY_VERSION ?= 2.0.0
+OOLD := uvx --from "oold[validation]==$(OOLD_PY_VERSION)" oold
+# The engine (engine/) is a snapshot owned by the template: run it, never edit it.
+RUN := uv run python
+
 .PHONY: install
 install: ## Install the virtual environment and the git hooks
 	@echo "🚀 Creating virtual environment using uv"
 	@uv sync
 	@uv run pre-commit install
+
+.PHONY: lock
+lock: ## Resolve and write the lock of every module
+	@$(RUN) engine/lock.py
+
+.PHONY: package
+package: lock ## Build the offline package of every module (docs/packages/, not committed)
+	@$(RUN) engine/package.py
+
+.PHONY: validate
+validate: package ## Validate the modules and their example instances
+	@for dir in modules/*/; do \
+		ls $$dir*.schema.json >/dev/null 2>&1 || continue; \
+		$(OOLD) validate $$dir || exit 1; \
+		for instance in $$dir*.instance.json; do \
+			test -e "$$instance" || continue; \
+			$(OOLD) validate-instance $$instance || exit 1; \
+		done; \
+		uv run --with pyld python engine/effective_views.py $$dir || exit 1; \
+	done
+
+.PHONY: bump
+bump: ## Raise the schema versions the changes since the last release require
+	@$(RUN) engine/level.py --apply
+
+.PHONY: bump-check
+bump-check: ## Fail if the commits since the last release imply a smaller version than the schemas need
+	@$(RUN) engine/bump.py --check
+
+.PHONY: check-identifiers
+check-identifiers: ## After a release: check every identifier resolves (needs the published site)
+	@$(RUN) engine/check_identifiers.py --require
 
 .PHONY: check-extensions
 check-extensions: ## Check zensical.toml still restates Zensical's default Markdown extensions
@@ -12,10 +51,14 @@ check-extensions: ## Check zensical.toml still restates Zensical's default Markd
 check: check-extensions ## Run all quality checks
 	@echo "🚀 Linting: Running pre-commit"
 	@uv run pre-commit run --files $$(git ls-files --cached --others --exclude-standard)
+	@echo "🚀 Checking locks, versions and the pinned specification edition"
+	@$(RUN) engine/lock.py --check
+	@$(RUN) engine/level.py --check
+	@$(RUN) engine/spec_edition.py --check
+	@$(RUN) engine/check_enums.py
 
 .PHONY: test
-test: ## Run the tests (the schema engine and its checks arrive with the engine snapshot)
-	@echo "No engine snapshot yet: nothing to test."
+test: validate ## Validate the schemas and their example instances
 
 .PHONY: docs-test
 docs-test: ## Test if documentation can be built without warnings or errors

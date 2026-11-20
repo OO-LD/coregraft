@@ -4,6 +4,10 @@
   "x-oold-version": "0.1.0",
   "title": "Example",
   "description": "A placeholder schema; replace it with your own.",
+  "@context": {
+    "rdfs": "http://www.w3.org/2000/01/rdf-schema#",
+    "label": "rdfs:label"
+  },
   "type": "object",
   "properties": {
     "label": {

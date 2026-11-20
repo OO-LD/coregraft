@@ -1,0 +1,9 @@
+{
+  "lock_version": 2,
+  "namespace": "https://coregraft-owner.github.io/coregraft-example",
+  "module": "example",
+  "version": "0.1.0",
+  "spec_edition": "1.0.1",
+  "requires": {},
+  "ontologies": []
+}

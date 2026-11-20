@@ -1,0 +1,157 @@
+"""Helpers every generator needs, defined once.
+
+Reading a module's version, merging a context and shortening a mapping set identifier are
+each one line, which is exactly why they were copied into three scripts and then diverged:
+one read the version from module.json and another from a member schema, so a bumped module
+would have published its files at one path and advertised another.
+
+macros.py deliberately keeps its own copies: it is written to move into the OO-LD core
+unchanged, and importing repository-local helpers would tie it here.
+"""
+
+from __future__ import annotations
+
+import json
+from pathlib import Path
+
+from config import CONFIG
+
+ROOT = Path(__file__).resolve().parent.parent
+MODULES = ROOT / "modules"
+
+
+class LockError(Exception):
+    """A closure that cannot be pinned. Defined here so a script run as `__main__` and the
+    modules it imports raise one and the same class."""
+
+
+def read(path: Path) -> dict:
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
+def resolve(origin: Path, target: str, namespace: str | None = None) -> Path:
+    """Where a reference lives in this tree.
+
+    A cross-module reference names the published IRI, since that is what resolves for a
+    consumer. In the working tree the same schema is a file, and the file is the source of
+    truth, so a published IRI of a module kept here is read from disk rather than fetched:
+    the checks stay offline and see the version being edited.
+    """
+    base = (namespace or CONFIG.namespace).rstrip("/") + "/"
+    if target.startswith(base):
+        parts = target[len(base):].split("/")
+        if len(parts) == 3:
+            module, _version, name = parts
+            candidate = MODULES / module / name
+            if candidate.is_file():
+                return candidate
+    return origin.parent / target
+
+
+def chain(schema_file: Path) -> list[Path]:
+    """A schema and every schema whose terms it needs, base first.
+
+    A reading needs every term the document can use, and a schema reaches terms three ways:
+    it extends a base with `allOf`, it lists another schema in its `@context`, and it points
+    a property at another schema with `$ref`. Following only `allOf` leaves the terms of an
+    embedded object undefined, so those keys are silently dropped on the way to RDF.
+    """
+    out: list[Path] = []
+
+    def refs(node) -> list[str]:
+        found = []
+        if isinstance(node, dict):
+            target = node.get("$ref")
+            if isinstance(target, str) and ".schema.json" in target:
+                found.append(target.split("#", 1)[0])
+            for value in node.values():
+                found += refs(value)
+        elif isinstance(node, list):
+            for value in node:
+                found += refs(value)
+        return found
+
+    def walk(f: Path) -> None:
+        if not f.is_file() or f in out:
+            return
+        schema = read(f)
+        context = schema.get("@context")
+        parts = context if isinstance(context, list) else [context]
+        for entry in parts:
+            if isinstance(entry, str) and ".schema.json" in entry:
+                walk(resolve(f, entry))
+        for target in refs(schema):
+            walk(resolve(f, target))
+        out.append(f)
+
+    walk(schema_file)
+    return out
+
+
+def set_name(iri: str) -> str:
+    """Short name of a mapping set, from its identifier."""
+    return iri.rstrip("/").rsplit("/", 1)[-1].removesuffix(".sssom.tsv")
+
+
+def line(version: str) -> str:
+    """The compatibility line an exact version belongs to.
+
+    Below 1.0 a break raises the minor, so the line is `major.minor`. From 1.0 a break
+    raises the major, so the line is `major`. Every script and the site read this one rule.
+    """
+    parts = version.split(".")
+    if len(parts) != 3 or not all(p.isdigit() for p in parts):
+        raise ValueError(f"not an exact version: {version!r}")
+    return ".".join(parts[:2]) if parts[0] == "0" else parts[0]
+
+
+def latest_per_line(entries: list[dict]) -> list[dict]:
+    """One release entry per compatibility line, the newest, in order of first appearance.
+
+    Documentation for a line is best read from the newest release on it, and a reader
+    choosing a version should not see the same line once per patch.
+    """
+    newest: dict[str, dict] = {}
+    for entry in entries:
+        newest[line(entry["module"])] = entry
+    return list(newest.values())
+
+
+def module_version(module: str, full: bool = False) -> str:
+    """The version a module publishes under.
+
+    From module.json, which is the module's own statement about itself. A member schema's
+    x-oold-version says when that schema last changed, which is a different question.
+    """
+    path = MODULES / module / "module.json"
+    version = read(path).get("version", "0.1.0") if path.exists() else "0.1.0"
+    return version if full else line(version)
+
+
+def context_of(schema: dict) -> dict:
+    """The inline term definitions of a schema, with a list `@context` merged in order."""
+    ctx = schema.get("@context")
+    if isinstance(ctx, list):
+        merged: dict = {}
+        for part in ctx:
+            if isinstance(part, dict):
+                merged.update(part)
+        return merged
+    return ctx if isinstance(ctx, dict) else {}
+
+
+def mapping_sets(schemas: list[dict]) -> list[str]:
+    """Every mapping set the given schemas declare a synonym in.
+
+    Taken over all of them, not just the most derived one: a subschema inherits the
+    mappings of what it extends, so a reading exists for a set it never mentions itself.
+    """
+    found = set()
+    for schema in schemas:
+        for synonyms in (schema.get("x-oold-context") or {}).values():
+            for fragment in (synonyms or {}).values():
+                if isinstance(fragment, dict):
+                    set_id = (fragment.get("x-oold-sssom") or {}).get("mapping_set_id")
+                    if set_id:
+                        found.add(set_id)
+    return sorted(found)
