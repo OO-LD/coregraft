@@ -20,7 +20,7 @@ package: lock ## Build the offline package of every module (docs/packages/, not 
 	@$(RUN) engine/package.py
 
 .PHONY: validate
-validate: package ## Validate the modules and their example instances
+validate: package ## Validate the modules, their example instances and the package
 	@for dir in modules/*/; do \
 		ls $$dir*.schema.json >/dev/null 2>&1 || continue; \
 		$(OOLD) validate $$dir || exit 1; \
@@ -30,6 +30,7 @@ validate: package ## Validate the modules and their example instances
 		done; \
 		uv run --with pyld python engine/effective_views.py $$dir || exit 1; \
 	done
+	@uv run --with jsonschema --with referencing python engine/check_package.py
 
 .PHONY: bump
 bump: ## Raise the schema versions the changes since the last release require

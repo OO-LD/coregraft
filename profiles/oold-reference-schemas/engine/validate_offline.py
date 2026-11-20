@@ -1,0 +1,91 @@
+# /// script
+# requires-python = ">=3.10"
+# dependencies = ["jsonschema", "referencing"]
+# ///
+"""Validate an instance against an offline package, with no network.
+
+    uv run validate_offline.py materials-0.2.0.zip my-material.json
+
+Pass --base for a package published under another namespace.
+
+The instance names its schema in `$schema`. That can be an identity IRI, for example
+https://w3id.org/oo-ld/schemas/materials/0.2/Material.schema.json, or a bare file name,
+which is read from the module the package is named after. Pass --schema to override it.
+
+The one rule: the IRI without its https:// is a member of the zip. The
+registry below has no other way to fetch a document, so a missing one is an error and
+never a request.
+"""
+
+from __future__ import annotations
+
+import json
+import sys
+import zipfile
+from pathlib import Path
+
+from jsonschema import Draft202012Validator
+from referencing import Registry, Resource
+from referencing.exceptions import Unresolvable
+from referencing.jsonschema import DRAFT202012
+
+BASE = "https://w3id.org/oo-ld/schemas/"
+
+
+def validate(package: Path, instance: Path, schema: str | None = None,
+             base: str = BASE) -> list[str]:
+    """The problems of an instance, empty when it is valid.
+
+    `base` is the identity namespace of the package, with a trailing slash.
+    """
+    archive = zipfile.ZipFile(package)
+    members = set(archive.namelist())
+
+    def retrieve(iri: str) -> Resource:
+        # a member is the IRI without its scheme; older packages name it relative to the
+        # namespace instead
+        member = next((m for m in (iri.removeprefix("https://"), iri.removeprefix(base))
+                       if m in members), None)
+        if member is None:
+            raise LookupError(f"not in the package: {iri}")
+        return Resource.from_contents(json.loads(archive.read(member)),
+                                      default_specification=DRAFT202012)
+
+    data = json.loads(instance.read_text(encoding="utf-8"))
+    iri = schema or data["$schema"]
+    if "://" not in iri:  # a bare file name, read from the module the package is named after
+        module, _, version = package.stem.rpartition("-")
+        iri = f"{base}{module}/{version}/{iri}"
+    validator = Draft202012Validator({"$ref": iri}, registry=Registry(retrieve=retrieve))
+    try:
+        return [error.message[:160] for error in validator.iter_errors(data)]
+    except Unresolvable as missing:
+        return [f"not in the package: {missing.ref}"]
+
+
+def main(argv: list[str]) -> int:
+    options = {}
+    paths = []
+    skip = False
+    for i, arg in enumerate(argv):
+        if skip:
+            skip = False
+        elif arg in ("--schema", "--base") and i + 1 < len(argv):
+            options[arg] = argv[i + 1]
+            skip = True
+        elif not arg.startswith("--"):
+            paths.append(arg)
+    schema = options.get("--schema")
+    base = options.get("--base", BASE)
+    if len(paths) != 2:
+        print(__doc__)
+        return 2
+    problems = validate(Path(paths[0]), Path(paths[1]), schema, base.rstrip("/") + "/")
+    for problem in problems:
+        print(f"  ! {problem}")
+    print("valid" if not problems else f"{len(problems)} problem(s)")
+    return 1 if problems else 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))
