@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.16.0 (2026-11-20)
+
+### Features
+
+- **profile**: Carry the engine in the route and wire its checks into make and CI
+  ([`7fd7af3`](https://github.com/OO-LD/coregraft/commit/7fd7af3cc30b4bab8a75f1a2ca6c9efd02315882))
+
+
 ## v0.15.0 (2026-11-18)
 
 ### Features
