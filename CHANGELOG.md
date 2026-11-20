@@ -7,6 +7,14 @@ not edit released sections by hand.
 
 <!-- version list -->
 
+## v0.18.0 (2026-11-20)
+
+### Features
+
+- **profile**: Add make request-inclusion to the route and resync the engine
+  ([`bb22999`](https://github.com/OO-LD/coregraft/commit/bb22999cc0751a04972d55582e60f2e9f3b08136))
+
+
 ## v0.17.0 (2026-11-20)
 
 ### Features
