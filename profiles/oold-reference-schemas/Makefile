@@ -32,6 +32,10 @@ validate: package ## Validate the modules, their example instances and the packa
 	done
 	@uv run --with jsonschema --with referencing python engine/check_package.py
 
+.PHONY: request-inclusion
+request-inclusion: ## Print the link that asks the OO-LD reference schemas to list this repository (after a release)
+	@$(RUN) scripts/request_inclusion.py
+
 .PHONY: bump
 bump: ## Raise the schema versions the changes since the last release require
 	@$(RUN) engine/level.py --apply

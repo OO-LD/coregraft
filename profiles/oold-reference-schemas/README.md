@@ -32,6 +32,7 @@ Everything else, or `make help` for the full list:
 | `make install` | Installs the environment and the git hooks |
 | `make lock` | Resolves and writes the lock of every module |
 | `make package` | Builds the offline package of every module into `docs/packages/` (not committed) |
+| `make request-inclusion` | After a release, prints a link that opens the inclusion form of the OO-LD reference schemas, filled in from this repository and the published package |
 | `make bump` | Raises the schema versions the changes since the last release require |
 | `make bump-check` | Fails if the commits imply a smaller version than the schemas need |
 | `make check-identifiers` | After a release, checks every identifier resolves |

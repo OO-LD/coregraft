@@ -5,11 +5,13 @@ runs the generated repository's own suite). These tests are the fast local
 guard on the assembly rules themselves.
 """
 
+import hashlib
 import re
 import shutil
 import subprocess
 import sys
 from pathlib import Path
+from urllib.parse import parse_qs, urlsplit
 
 import check_markdown_extensions
 import pytest
@@ -109,6 +111,35 @@ def test_reference_schemas_route_ships_a_module_and_its_identity(tmp_path: Path)
     assert "exclude: ^engine/" in (target / ".pre-commit-config.yaml").read_text(encoding="utf-8")
     assert 'requires-python = ">=3.11' in (target / "pyproject.toml").read_text(encoding="utf-8")
     assert (target / "docs/packages/.gitignore").exists()
+
+
+@pytest.mark.skipif(sys.version_info < (3, 11), reason="the engine needs Python 3.11")
+def test_request_inclusion_prints_a_link_that_fills_the_core_form(tmp_path: Path) -> None:
+    target = tmp_path / "route"
+    _generate(target, "oold-reference-schemas")
+    package = target / "docs/packages/example-0.1.0.zip"
+    for script in (
+        ["engine/lock.py"],
+        ["engine/package.py"],
+        ["scripts/request_inclusion.py", "--package", str(package)],
+    ):
+        done = subprocess.run(  # noqa: S603
+            [sys.executable, *script], cwd=target, capture_output=True, text=True, check=False
+        )
+        assert done.returncode == 0, done.stderr
+    link = done.stdout.strip().splitlines()[-1]
+    parts = urlsplit(link)
+    assert (
+        f"{parts.scheme}://{parts.netloc}{parts.path}" == "https://github.com/OO-LD/oold-reference-schemas/issues/new"
+    )
+    form = {key: value[0] for key, value in parse_qs(parts.query).items()}
+    assert form["template"] == "include-component.yml"
+    assert form["sha256"] == hashlib.sha256(package.read_bytes()).hexdigest()
+    assert form["repository"] == "https://github.com/demo-org/demo-repo"
+    assert form["namespace"] == form["site"] == "https://demo-org.github.io/demo-repo"
+    assert form["package"] == f"{form['site']}/packages/example-0.1.0.zip"
+    # The form takes the card title under its own id, `title` is the issue title.
+    assert (form["component_title"], form["module"], form["version"]) == ("Example", "example", "0.1.0")
 
 
 def test_the_committed_engine_snapshot_matches_its_manifest() -> None:
